@@ -237,6 +237,8 @@ p{margin:0}
 .sq.squish svg{animation:squish .5s ease}
 @keyframes squish{25%{transform:scale(1.22,.72)}55%{transform:scale(.9,1.12)}80%{transform:scale(1.04,.96)}}
 
+.toast{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:8px 16px;border-radius:99px;font-weight:600;font-size:15px;z-index:60;animation:pop .3s ease}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -285,8 +287,8 @@ const ICON={
   bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="currentColor" fill-opacity=".2"/></svg>',
   grid:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2.5"/><rect x="13" y="3" width="8" height="8" rx="2.5" opacity=".55"/><rect x="3" y="13" width="8" height="8" rx="2.5" opacity=".55"/><rect x="13" y="13" width="8" height="8" rx="2.5" opacity=".3"/></svg>',
   del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M17 9l-5 6M12 9l5 6"/></svg>',
-  on:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor"/></svg>',
-  off:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V6l11-2v12" opacity=".4"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor" opacity=".4"/><path d="M3 3l18 18"/></svg>',
+  on:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" fill-opacity=".2"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
+  off:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" fill-opacity=".2"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   shuffle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
@@ -370,14 +372,16 @@ async function pushRemote(){
 
 /* ---------- sound ---------- */
 let AC=null;
+// iPhone mutes web audio when the ring/silent switch is on; 'playback' lets game sounds through (Safari 17+).
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
 function ac(){if(!S.sound)return null;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(e){return null}}
 function tone(f,t0,dur,type='sine',vol=.18){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;
   const t=a.currentTime+t0;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(.0008,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.05)}
 const SCALE=[523.25,587.33,659.25,783.99,880,1046.5,1174.7,1318.5,1568,1760];
 const sfx={
-  good(i){const f=SCALE[Math.min(i,SCALE.length-1)];tone(f,0,.5,'sine',.2);tone(f*2,0,.25,'triangle',.05)},
-  bad(){tone(392,0,.22,'triangle',.12);tone(311,.14,.32,'triangle',.12)},
-  tap(){tone(880,0,.05,'sine',.04)},
+  good(i){const f=SCALE[Math.min(i,SCALE.length-1)];tone(f,0,.5,'sine',.3);tone(f*2,0,.25,'triangle',.08)},
+  bad(){tone(392,0,.22,'triangle',.2);tone(311,.14,.32,'triangle',.2)},
+  tap(){tone(880,0,.07,'sine',.1)},
   fanfare(){[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,i*.12,.5,'triangle',.14));tone(1318.5,.5,.9,'sine',.12);applause()},
   squeak(){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime;o.type='sine';o.frequency.setValueAtTime(500,t);o.frequency.exponentialRampToValueAtTime(1400,t+.15);o.frequency.exponentialRampToValueAtTime(900,t+.28);
     g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.15,t+.03);g.gain.exponentialRampToValueAtTime(.0008,t+.3);o.connect(g).connect(a.destination);o.start(t);o.stop(t+.35)},
@@ -477,7 +481,8 @@ function go(name){
 }
 $('#back').innerHTML=ICON.back;
 $('#back').onclick=()=>{if(cur==='play'){R=null;go('pick')}else go(PARENT[cur]||'home')};
-$('#sound').onclick=()=>{S.sound=!S.sound;save();renderTop();if(S.sound)sfx.tap()};
+$('#sound').onclick=()=>{S.sound=!S.sound;save();renderTop();toast(S.sound?'הצלילים פועלים':'הצלילים כבויים');if(S.sound){sfx.good(0);setTimeout(()=>sfx.good(2),130);setTimeout(()=>sfx.good(4),260)}};
+function toast(t){document.querySelector('.toast')?.remove();document.body.insertAdjacentHTML('beforeend',`<div class="toast" role="status">${t}</div>`);setTimeout(()=>document.querySelector('.toast')?.remove(),1600)}
 function renderTop(){
   $('#chipStars').innerHTML=`<span style="color:var(--gold)">${ICON.star}</span><span class="ltr">${S.stars}</span>`;
   const st=$('#chipStreak');st.hidden=!(S.streak>1&&S.lastDay>=yesterday());
