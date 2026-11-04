@@ -1,0 +1,789 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבמה של יעל</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Karantina:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen phone app — slim top bar, a scrolling screen area, play screen pins the keypad to the bottom. Theme: backstage dressing room by day, concert night in dark. */
+:root{
+  --bg:#FFF3F6; --bg-2:#FFE4EE; --surface:#FFFFFF; --surface-2:#F8EAF1; --ink:#3A1838; --muted:#866180; --line:#F1D5E3;
+  --accent:#F0287A; --good:#13A070; --bad:#E0503B; --gold:#F2AE1C;
+  --lock-filter:brightness(0) opacity(.13);
+  --shadow:0 6px 22px -10px rgba(120,20,80,.35);
+  --font-display:"Karantina","Fredoka",system-ui,sans-serif;
+  --font-body:"Fredoka","Rubik","Arial Hebrew",system-ui,sans-serif;
+  --r:22px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170C20; --bg-2:#26112F; --surface:#2A1636; --surface-2:#3A2047; --ink:#FBEAF3; --muted:#C6A4C4; --line:#4A2A5C;
+  --good:#3DD69E; --bad:#FF7A66; --gold:#FFCB52; --lock-filter:brightness(0) invert(1) opacity(.15);
+  --shadow:0 8px 26px -12px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#170C20; --bg-2:#26112F; --surface:#2A1636; --surface-2:#3A2047; --ink:#FBEAF3; --muted:#C6A4C4; --line:#4A2A5C;
+  --good:#3DD69E; --bad:#FF7A66; --gold:#FFCB52; --lock-filter:brightness(0) invert(1) opacity(.15);
+  --shadow:0 8px 26px -12px rgba(0,0,0,.7); color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{
+  background:
+    radial-gradient(90% 45% at 15% -5%, color-mix(in srgb,var(--accent) 22%,transparent), transparent 70%),
+    radial-gradient(70% 40% at 95% 0%, color-mix(in srgb,var(--gold) 18%,transparent), transparent 70%),
+    var(--bg);
+  color:var(--ink); font-family:var(--font-body); font-size:17px; line-height:1.45;
+  -webkit-tap-highlight-color:transparent; overflow:hidden;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ltr{direction:ltr;unicode-bidi:isolate;display:inline-block;white-space:nowrap}
+b{font-weight:700}
+
+#app{height:100%;max-width:540px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:flex;align-items:center;gap:8px;padding-block:10px 6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
+  border-radius:99px;padding:5px 12px;font-weight:600;font-size:15px;white-space:nowrap}
+.chip svg{width:18px;height:18px}
+.top .grow{flex:1;min-width:0}
+.iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line)}
+.iconbtn svg{width:20px;height:20px}
+main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:18px}
+.screen{display:flex;flex-direction:column;gap:14px;animation:in .35s ease}
+@keyframes in{from{transform:translateY(8px)}to{transform:none}}
+
+h1,h2,h3{margin:0;text-wrap:balance}
+.display{font-family:var(--font-display);font-weight:700;line-height:.9;letter-spacing:.5px}
+h1.display{font-size:64px}
+h2.display{font-size:46px}
+.muted{color:var(--muted)}
+p{margin:0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:99px;padding:14px 22px;font-weight:700;font-size:19px;
+  background:var(--accent);color:#fff;box-shadow:0 10px 24px -10px color-mix(in srgb,var(--accent) 80%,transparent);transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn svg{width:24px;height:24px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+
+/* home */
+.hero{display:flex;flex-direction:column;gap:4px;padding-top:6px}
+.hero .hello{font-size:19px;font-weight:600;color:var(--muted)}
+.lvl{display:flex;flex-direction:column;gap:8px}
+.bar{height:12px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .6s}
+.lvl .meta{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+.today{display:flex;align-items:center;gap:14px}
+.ring{width:64px;height:64px;flex:none}
+.ring circle{fill:none;stroke-width:8}
+.ring .bgc{stroke:var(--surface-2)}
+.ring .fgc{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .6s}
+.ring text{font-family:var(--font-body);font-weight:700;font-size:20px;fill:var(--ink)}
+.today .txt{display:flex;flex-direction:column;min-width:0}
+.cta{font-size:24px;padding:18px 22px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:14px;min-height:112px;transition:transform .12s}
+.tile:active{transform:scale(.97)}
+.tile .ic{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent)}
+.tile .ic svg{width:24px;height:24px}
+.tile .ic.sq svg{width:36px;height:36px}
+.tile b{font-size:18px}
+.tile small{color:var(--muted);font-size:14px;line-height:1.3}
+.suggest{display:flex;align-items:center;gap:12px;text-align:right;width:100%}
+.suggest .tag{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.3px}
+.suggest .go{margin-inline-start:auto;font-size:22px;color:var(--accent)}
+.looks{display:flex;gap:10px;flex-wrap:wrap}
+.look{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:99px;border:2px solid var(--line);background:var(--surface);font-size:15px;font-weight:600}
+.look i{width:22px;height:22px;border-radius:50%;display:block}
+.look[aria-pressed="true"]{border-color:var(--ink)}
+.look:disabled{opacity:.45;cursor:default}
+.sec-title{font-weight:700;font-size:15px;color:var(--muted);letter-spacing:.3px}
+
+/* pick */
+.modes{display:flex;flex-direction:column;gap:10px}
+.mode{display:flex;align-items:center;gap:12px;text-align:right;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.mode .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent);color:#fff;flex:none}
+.mode .ic svg{width:24px;height:24px}
+.mode div{display:flex;flex-direction:column;min-width:0}
+.mode small{color:var(--muted);font-size:14px}
+.tables{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tbl{aspect-ratio:1;max-width:100%;border-radius:18px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden}
+.tbl b{font-size:26px;line-height:1}
+.tbl small{font-size:12px;color:var(--muted)}
+.tbl .fill{position:absolute;inset:auto 0 0 0;background:color-mix(in srgb,var(--accent) 20%,transparent);z-index:0}
+.tbl>*:not(.fill){position:relative}
+
+/* play */
+.play{height:100%;display:flex;flex-direction:column;gap:10px}
+.lights{display:flex;gap:6px;justify-content:center;direction:ltr}
+.lights i{width:22px;height:8px;border-radius:99px;background:var(--surface-2);transition:background .3s}
+.lights i.ok{background:var(--accent)}
+.lights i.fix{background:var(--gold)}
+.lights i.miss{background:var(--bad)}
+.lights i.now{background:color-mix(in srgb,var(--accent) 40%,var(--surface-2))}
+.crowd{display:flex;align-items:center;gap:10px}
+.fan{display:flex;flex-direction:column;align-items:center;font-size:12px;font-weight:600;color:var(--muted);flex:none;width:52px;position:relative}
+.fan svg{width:42px;height:42px}
+.fan.hop svg{animation:hop .5s ease}
+@keyframes hop{30%{transform:translateY(-10px) rotate(-6deg)}60%{transform:translateY(0) rotate(4deg)}}
+.meter{flex:1;display:flex;flex-direction:column;gap:3px;align-items:stretch;text-align:center;font-size:12px;color:var(--muted)}
+.meter .bar{height:10px}
+.say{position:absolute;bottom:100%;white-space:nowrap;background:var(--ink);color:var(--bg);font-size:13px;padding:4px 10px;border-radius:12px;animation:pop .3s ease both;z-index:2}
+.fan:first-child .say{right:0}
+.fan:last-child .say{left:0}
+.qcard{flex:1;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;
+  background:var(--surface);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:12px}
+.qcard.good{animation:glow .6s ease}
+.qcard.shake{animation:shake .4s ease}
+@keyframes glow{40%{box-shadow:0 0 0 6px color-mix(in srgb,var(--good) 45%,transparent)}}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.eq{font-weight:700;font-size:clamp(52px,15vw,76px);line-height:1;direction:ltr;display:flex;gap:.25em;align-items:center}
+.eq .x{color:var(--accent);font-size:.75em}
+.ans{min-width:2.4em;text-align:center;font-weight:700;font-size:clamp(40px,11vw,56px);line-height:1.1;direction:ltr;border-bottom:4px dashed var(--line);color:var(--accent);padding-inline:8px}
+.ans.empty{color:var(--line)}
+.praise{position:absolute;top:10px;font-family:var(--font-display);font-weight:700;font-size:36px;color:var(--accent);animation:pop .5s ease both}
+@keyframes pop{from{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}to{transform:scale(1);opacity:1}}
+.hintline{font-size:15px;color:var(--muted);text-align:center;max-width:32ch}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:ltr}
+.key{height:clamp(50px,8.4vh,66px);border-radius:18px;background:var(--surface);border:1px solid var(--line);font-size:28px;font-weight:600;
+  box-shadow:0 3px 0 var(--line);transition:transform .06s}
+.key:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.key svg{width:26px;height:26px;vertical-align:middle}
+.k-hint{font-size:15px;display:flex;align-items:center;justify-content:center;gap:4px;color:var(--gold)}
+.k-hint svg{width:22px;height:22px}
+.k-del{color:var(--muted)}
+.fb{display:flex;flex-direction:column;gap:12px}
+.fb .card{border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.fb .big{font-size:30px;font-weight:700}
+.fb .tip{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:16px;padding:10px 12px;margin-top:10px;font-size:16px}
+.fb .tip svg{width:22px;height:22px;flex:none;color:var(--gold);margin-top:2px}
+
+/* result */
+.result{align-items:center;text-align:center;padding-top:10px}
+.bigstars{display:flex;gap:10px;direction:ltr}
+.bigstars svg{width:68px;height:68px;color:var(--surface-2)}
+.bigstars svg.on{color:var(--gold);animation:pop .5s ease both}
+.bigstars svg:nth-child(2).on{animation-delay:.2s}
+.bigstars svg:nth-child(3).on{animation-delay:.4s}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column}
+.stat b{font-size:28px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:14px}
+.unlock{width:100%;display:flex;align-items:center;gap:14px;text-align:right;border:2px solid var(--gold)}
+.unlock svg{width:80px;height:80px;flex:none;animation:pop .6s .5s ease both}
+.facts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.facts span{background:color-mix(in srgb,var(--accent) 14%,var(--surface));border-radius:99px;padding:3px 10px;font-weight:600;font-size:15px}
+.result .btns{display:flex;flex-direction:column;gap:10px;width:100%}
+
+/* tricks */
+.tlist{display:flex;flex-direction:column;gap:10px}
+.trow{display:flex;align-items:center;gap:12px;text-align:right;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.trow .num{width:52px;height:52px;flex:none;border-radius:16px;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:30px;
+  background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent);direction:ltr}
+.trow div{display:flex;flex-direction:column;min-width:0}
+.trow small{color:var(--muted);font-size:14px}
+.trow .done{margin-inline-start:auto;color:var(--good);flex:none}
+.trow .done svg{width:24px;height:24px}
+.lesson p{font-size:18px;line-height:1.55;max-width:60ch}
+.lesson .body{display:flex;flex-direction:column;gap:10px}
+.demo{display:flex;flex-direction:column;gap:12px;align-items:center}
+.stepper{display:flex;align-items:center;gap:14px;direction:ltr}
+.stepper button{width:44px;height:44px;border-radius:50%;background:var(--surface-2);font-size:24px;font-weight:700}
+.stepper .eqs{font-size:30px;font-weight:700;min-width:5ch;text-align:center}
+.calc{display:flex;flex-direction:column;gap:4px;align-items:center;font-size:20px}
+.calc b{color:var(--accent);font-size:1.15em}
+.dots{display:grid;gap:4px;direction:ltr;max-width:100%}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.dots i.b{background:var(--gold)}
+.dots i.c{background:var(--good)}
+.dots i.ghost{background:var(--surface-2)}
+.dots i.cross{background:transparent;border:2px dashed var(--bad)}
+.fingers{display:flex;gap:6px;align-items:flex-end;direction:ltr;height:120px}
+.fingers .hand{display:flex;gap:4px;align-items:flex-end}
+.finger{width:24px;border-radius:12px 12px 8px 8px;background:#F6C9A9;position:relative;transition:height .25s,opacity .25s;display:flex;justify-content:center}
+.finger::before{content:"";position:absolute;top:4px;width:16px;height:20px;border-radius:8px 8px 5px 5px;background:var(--nail)}
+.finger.down{height:34px!important;opacity:.55}
+.finger span{position:absolute;bottom:-20px;font-size:12px;color:var(--muted)}
+.finger-out{font-size:18px;text-align:center;min-height:2.8em;margin-top:14px}
+
+/* map */
+.grid10{display:grid;grid-template-columns:repeat(11,1fr);gap:3px;direction:ltr}
+.grid10 .h{display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--accent);aspect-ratio:1}
+.cell{aspect-ratio:1;padding:0;min-width:0;border-radius:8px;display:grid;place-items:center;font-size:clamp(10px,3vw,14px);font-weight:600;background:var(--surface-2);color:var(--muted);font-variant-numeric:tabular-nums}
+.cell.l1{background:color-mix(in srgb,var(--accent) 18%,var(--surface));color:var(--ink)}
+.cell.l2{background:color-mix(in srgb,var(--accent) 38%,var(--surface));color:var(--ink)}
+.cell.l3{background:color-mix(in srgb,var(--accent) 65%,var(--surface));color:#fff}
+.cell.l4{background:var(--accent);color:#fff;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--gold) 80%,transparent)}
+.cell.sel{outline:3px solid var(--ink);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:14px;height:14px;border-radius:4px;display:block}
+.info{min-height:84px}
+
+/* squishies */
+.sqgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sq{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:10px 6px}
+.sq svg{width:100%;max-width:92px;height:auto;aspect-ratio:1;transform-origin:50% 90%}
+.sq.locked svg{filter:var(--lock-filter)}
+.sq b{font-size:15px}
+.sq small{font-size:12px;color:var(--muted)}
+.sq.squish svg{animation:squish .5s ease}
+@keyframes squish{25%{transform:scale(1.22,.72)}55%{transform:scale(.9,1.12)}80%{transform:scale(1.04,.96)}}
+
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app" dir="rtl" lang="he">
+  <header class="top">
+    <button class="iconbtn" id="back" aria-label="חזרה" hidden></button>
+    <span class="chip" id="chipStars"></span>
+    <span class="grow"></span>
+    <span class="chip" id="chipStreak" hidden></span>
+    <button class="iconbtn" id="sound" aria-label="צלילים"></button>
+  </header>
+  <main id="main">
+    <section class="screen" id="s-home"></section>
+    <section class="screen" id="s-pick" hidden></section>
+    <section class="screen play" id="s-play" hidden></section>
+    <section class="screen result" id="s-result" hidden></section>
+    <section class="screen" id="s-tricks" hidden></section>
+    <section class="screen lesson" id="s-trick" hidden></section>
+    <section class="screen" id="s-map" hidden></section>
+    <section class="screen" id="s-squish" hidden></section>
+  </main>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+document.documentElement.lang='he';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const range=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+const eq=s=>`<span class="ltr">${s}</span>`;
+const bidi=s=>s.replace(/\d+(?:\s*[×+=−→]\s*\d+)+/g,m=>eq(m)); // keeps math in Hebrew sentences left-to-right
+const key=(a,b)=>a<b?a+'x'+b:b+'x'+a;
+const FACTS=[];for(let a=1;a<=10;a++)for(let b=a;b<=10;b++)FACTS.push(key(a,b));
+const pad2=n=>String(n).padStart(2,'0');
+const dayStr=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const today=()=>dayStr(new Date());
+const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return dayStr(d)};
+const DAILY_GOAL=20;
+
+/* ---------- icons ---------- */
+const ICON={
+  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.8 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3l-6.1 3.5 1.6-6.8L2.3 9.4l6.9-.6z"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="15" cy="8" r="5" fill="currentColor" fill-opacity=".25"/><path d="M11.5 11.5L4 19l1 1 7.5-7.5"/><path d="M13 5l5 5"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="currentColor" fill-opacity=".2"/></svg>',
+  grid:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2.5"/><rect x="13" y="3" width="8" height="8" rx="2.5" opacity=".55"/><rect x="3" y="13" width="8" height="8" rx="2.5" opacity=".55"/><rect x="13" y="13" width="8" height="8" rx="2.5" opacity=".3"/></svg>',
+  del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M17 9l-5 6M12 9l5 6"/></svg>',
+  on:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor"/></svg>',
+  off:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V6l11-2v12" opacity=".4"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor" opacity=".4"/><path d="M3 3l18 18"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  shuffle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+  target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+  fire:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 4.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 1-3.5S9 11 11 11c0-4 1-9 1-9z"/></svg>',
+};
+
+/* ---------- fans: the siblings in the front row ---------- */
+const FAN={
+  sol:'<svg viewBox="0 0 40 40"><circle cx="7" cy="17" r="5" fill="#5A3826"/><circle cx="33" cy="17" r="5" fill="#5A3826"/><circle cx="20" cy="22" r="13" fill="#FFD9C0"/><path d="M7.5 19c0-8 5.5-11 12.5-11s12.5 3 12.5 11c-3-4-8-5-12.5-5S10.5 15 7.5 19z" fill="#5A3826"/><circle cx="15.5" cy="22" r="1.8" fill="#3A1838"/><circle cx="24.5" cy="22" r="1.8" fill="#3A1838"/><ellipse cx="12.5" cy="26.5" rx="2.6" ry="1.6" fill="#FF8FB1" opacity=".6"/><ellipse cx="27.5" cy="26.5" rx="2.6" ry="1.6" fill="#FF8FB1" opacity=".6"/><path d="M16.5 27.5q3.5 3.5 7 0" stroke="#3A1838" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="7" cy="12.5" r="2.2" fill="#FF5C9A"/><circle cx="33" cy="12.5" r="2.2" fill="#FF5C9A"/></svg>',
+  berry:'<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="14" fill="#FFE0CC"/><path d="M19 8.5c-2-3 2-5 3.5-3" stroke="#8A5A3C" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M13 21q2.5 2 5 0M22 21q2.5 2 5 0" stroke="#3A1838" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="12" cy="25.5" rx="2.6" ry="1.6" fill="#FF8FB1" opacity=".6"/><ellipse cx="28" cy="25.5" rx="2.6" ry="1.6" fill="#FF8FB1" opacity=".6"/><ellipse cx="20" cy="28.5" rx="4.5" ry="3" fill="#7FC8F8"/><circle cx="20" cy="28.5" r="1.6" fill="#fff"/></svg>',
+};
+
+/* ---------- squishies ---------- */
+const SQ=[
+  {n:'פופי',c:'#FF9EC4',s:'round'},{n:'מיצי',c:'#FFC59E',s:'cat'},{n:'תותית',c:'#FF6B8A',s:'berry'},
+  {n:'ענני',c:'#A9D8FF',s:'cloud'},{n:'דובון',c:'#E0B084',s:'bear'},{n:'לולו',c:'#CDB4FF',s:'bunny'},
+  {n:'מנטה',c:'#9FE8C8',s:'round'},{n:'פנדי',c:'#FFFFFF',s:'panda'},{n:'אבוקדי',c:'#B5DE7A',s:'avo'},
+  {n:'לימונית',c:'#FFE680',s:'round'},{n:'שזיפי',c:'#C49BEA',s:'cat'},{n:'מרשמלו',c:'#FFF0DE',s:'mallow'},
+  {n:'קוקו',c:'#FFF7FB',s:'bunny'},{n:'פטל',c:'#E8457C',s:'berry'},{n:'נצנצית',c:'#FFC8E8',s:'glitter'},
+  {n:'יוניקורנית',c:'#FFFFFF',s:'unicorn'},
+];
+const STARS_PER_SQUISHY=5;
+function sqSVG(q){
+  const c=q.c, s=q.s, dark='#3A1838';
+  let back='',body='',front='',fy=0;
+  const ell=(cx,cy,rx,ry,f,o='')=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${f}" ${o}/>`;
+  if(s==='cat') back=`<path d="M22 44L20 14L44 32Z" fill="${c}"/><path d="M78 44L80 14L56 32Z" fill="${c}"/><path d="M25 38L24 22L37 32Z" fill="#FFB3C8"/><path d="M75 38L76 22L63 32Z" fill="#FFB3C8"/>`;
+  if(s==='bear'||s==='panda'){const e=s==='panda'?'#3B2F3F':c;back=`<circle cx="25" cy="33" r="11" fill="${e}"/><circle cx="75" cy="33" r="11" fill="${e}"/>`+(s==='bear'?`<circle cx="25" cy="33" r="5.5" fill="#C48E62"/><circle cx="75" cy="33" r="5.5" fill="#C48E62"/>`:'')}
+  if(s==='bunny') back=`<ellipse cx="37" cy="22" rx="8" ry="20" fill="${c}" transform="rotate(-10 37 22)"/><ellipse cx="63" cy="22" rx="8" ry="20" fill="${c}" transform="rotate(10 63 22)"/><ellipse cx="37" cy="24" rx="4" ry="13" fill="#FFB3C8" transform="rotate(-10 37 24)"/><ellipse cx="63" cy="24" rx="4" ry="13" fill="#FFB3C8" transform="rotate(10 63 24)"/>`;
+  if(s==='unicorn') back=`<path d="M50 4L43 31H57Z" fill="#FFD36B"/><path d="M45.5 22l9-3M44.5 27l11-3" stroke="#F2AE1C" stroke-width="1.5"/><circle cx="28" cy="34" r="8" fill="#FF9EC4"/><circle cx="20" cy="45" r="7" fill="#CDB4FF"/><circle cx="18" cy="58" r="6" fill="#A9D8FF"/>`;
+  const shadow=ell(50,93,30,4,'#000','opacity=".12"');
+  if(s==='berry') body=`<path d="M50 92C20 82 11 54 21 39C31 26 44 30 50 34C56 30 69 26 79 39C89 54 80 82 50 92Z" fill="${c}"/>`;
+  else if(s==='cloud') body=`<circle cx="30" cy="60" r="20" fill="${c}"/><circle cx="50" cy="48" r="24" fill="${c}"/><circle cx="71" cy="60" r="20" fill="${c}"/><rect x="28" y="56" width="44" height="32" rx="16" fill="${c}"/>`;
+  else if(s==='mallow') body=`<rect x="17" y="26" width="66" height="64" rx="24" fill="${c}"/><ellipse cx="50" cy="30" rx="30" ry="7" fill="#fff" opacity=".6"/>`;
+  else if(s==='avo') {body=ell(50,58,32,36,c)+ell(50,58,25,29,'#E7F5B8')+`<circle cx="50" cy="72" r="12" fill="#A0673E"/><circle cx="46" cy="68" r="3.5" fill="#fff" opacity=".35"/>`;fy=-10}
+  else body=ell(50,60,36,32,c);
+  if(s==='panda') front+=ell(38,57,8,9,'#3B2F3F','transform="rotate(-15 38 57)"')+ell(62,57,8,9,'#3B2F3F','transform="rotate(15 62 57)"');
+  if(s==='berry') front+=`<path d="M38 34l6-9 6 7 6-7 6 9-12 3z" fill="#4CC07A"/>`+[[32,48],[68,48],[40,80],[60,80],[50,86],[28,62],[72,62]].map(([x,y])=>ell(x,y,1.6,2.4,'#FFE38A')).join('');
+  if(s==='glitter'||s==='unicorn') front+=[[18,30,5],[84,40,4],[80,80,3.5],[14,76,3]].map(([x,y,r])=>`<path d="M${x} ${y-r*2}Q${x} ${y} ${x+r*2} ${y}Q${x} ${y} ${x} ${y+r*2}Q${x} ${y} ${x-r*2} ${y}Q${x} ${y} ${x} ${y-r*2}Z" fill="#F2AE1C"/>`).join('');
+  const hl=s==='avo'?'':ell(34,44,9,5,'#fff','opacity=".55" transform="rotate(-25 34 44)"');
+  const y=58+fy;
+  const face=`<ellipse cx="38" cy="${y}" rx="4.6" ry="5.6" fill="${s==='panda'?'#fff':dark}"/><ellipse cx="62" cy="${y}" rx="4.6" ry="5.6" fill="${s==='panda'?'#fff':dark}"/>`
+    +(s==='panda'?`<circle cx="38" cy="${y}" r="3" fill="${dark}"/><circle cx="62" cy="${y}" r="3" fill="${dark}"/>`:'')
+    +`<circle cx="39.6" cy="${y-2}" r="1.7" fill="#fff"/><circle cx="63.6" cy="${y-2}" r="1.7" fill="#fff"/>`
+    +ell(29,y+8,6,3.4,'#FF6F9C','opacity=".45"')+ell(71,y+8,6,3.4,'#FF6F9C','opacity=".45"')
+    +`<path d="M45 ${y+6}Q50 ${y+11} 55 ${y+6}" stroke="${dark}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">${shadow}${back}${body}${hl}${front}${face}</svg>`;
+}
+
+/* ---------- levels & looks ---------- */
+const LEVELS=[[0,'חזרות בחדר'],[8,'הופעה בסלון'],[20,'הבמה של בית הספר'],[38,'מועדון קטן בעיר'],[60,'היכל התרבות'],[90,'הופעה בפארק'],[130,'סיבוב הופעות עולמי']];
+const LOOKS=[{n:'ורוד פופ',a:'#F0287A',at:0},{n:'לילך',a:'#8A5CF6',at:12},{n:'אוקיינוס',a:'#1C8FD9',at:30},{n:'מנטה',a:'#0E9C74',at:50},{n:'זהב במה',a:'#D08400',at:75}];
+function levelOf(st){let i=0;LEVELS.forEach((l,j)=>{if(st>=l[0])i=j});return i}
+
+/* ---------- state ---------- */
+const LS='yael-kefel-v1';
+const freshState=()=>({v:1,stars:0,rounds:0,answers:0,facts:{},days:{},streak:0,lastDay:'',owned:1,tricks:{},look:0,sound:true,updated:0});
+let S=freshState();
+try{const r=JSON.parse(localStorage.getItem(LS));if(r&&r.v===1)S=Object.assign(freshState(),r)}catch(e){}
+const F=k=>S.facts[k]||(S.facts[k]={box:0,seen:0,ok:0,miss:0});
+const box=k=>S.facts[k]?.box||0;
+function save(){S.updated=Date.now();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+
+/* Optional cloud copy for a signed-in viewer, private to her (data/users/<id>/). Local storage stays the source on the device. */
+let remoteRef=null,writing=false,again=false;
+async function pushRemote(){
+  if(!remoteRef)return; if(writing){again=true;return}
+  writing=true;try{await remoteRef.set({state:JSON.stringify(S),updated:S.updated})}catch(e){}
+  writing=false;if(again){again=false;pushRemote()}
+}
+(async()=>{try{
+  if(!window.claude?.use)return;
+  const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+  if(!db||!user)return; const id=await user.id(); if(!id)return;
+  const ref=db.doc('data/users/'+id+'/progress');
+  const snap=await ref.get(); const d=snap.data?.();
+  if(d&&d.state&&(d.updated||0)>(S.updated||0)){const r=JSON.parse(d.state);if(r&&r.v===1){S=Object.assign(freshState(),r);try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){};applyLook();if(!R)go(cur)}}
+  remoteRef=ref; if(!d||(S.updated||0)>(d.updated||0))pushRemote();
+}catch(e){}})();
+
+/* ---------- sound ---------- */
+let AC=null;
+function ac(){if(!S.sound)return null;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(e){return null}}
+function tone(f,t0,dur,type='sine',vol=.18){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;
+  const t=a.currentTime+t0;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(.0008,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.05)}
+const SCALE=[523.25,587.33,659.25,783.99,880,1046.5,1174.7,1318.5,1568,1760];
+const sfx={
+  good(i){const f=SCALE[Math.min(i,SCALE.length-1)];tone(f,0,.5,'sine',.2);tone(f*2,0,.25,'triangle',.05)},
+  bad(){tone(392,0,.22,'triangle',.12);tone(311,.14,.32,'triangle',.12)},
+  tap(){tone(880,0,.05,'sine',.04)},
+  fanfare(){[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,i*.12,.5,'triangle',.14));tone(1318.5,.5,.9,'sine',.12);applause()},
+  squeak(){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime;o.type='sine';o.frequency.setValueAtTime(500,t);o.frequency.exponentialRampToValueAtTime(1400,t+.15);o.frequency.exponentialRampToValueAtTime(900,t+.28);
+    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.15,t+.03);g.gain.exponentialRampToValueAtTime(.0008,t+.3);o.connect(g).connect(a.destination);o.start(t);o.stop(t+.35)},
+};
+function applause(){const a=ac();if(!a)return;const len=a.sampleRate*1.6,b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<len;i++){const env=Math.min(1,i/(a.sampleRate*.1))*Math.pow(1-i/len,1.5);d[i]=(Math.random()*2-1)*env*(Math.random()<.3?1:.35)}
+  const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();f.type='bandpass';f.frequency.value=1800;f.Q.value=.6;g.gain.value=.22;s.buffer=b;s.connect(f).connect(g).connect(a.destination);s.start()}
+const buzz=ms=>{try{navigator.userActivation?.hasBeenActive&&navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+
+/* ---------- confetti ---------- */
+const cv=$('#confetti'),cx=cv.getContext('2d');let parts=[],raf=0;
+function confetti(n=90){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;
+  const cols=[getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),'#F2AE1C','#CDB4FF','#9FE8C8','#FF9EC4','#A9D8FF'];
+  for(let i=0;i<n;i++)parts.push({x:innerWidth*(.2+Math.random()*.6),y:innerHeight*.35,vx:(Math.random()-.5)*9,vy:-Math.random()*10-4,r:Math.random()*6+4,c:cols[rnd(cols.length)],a:Math.random()*6,va:(Math.random()-.5)*.3,life:0});
+  if(!raf)raf=requestAnimationFrame(tick);
+}
+function tick(){const k=devicePixelRatio;cx.clearRect(0,0,cv.width,cv.height);
+  parts=parts.filter(p=>p.life<150&&p.y<innerHeight+20);
+  for(const p of parts){p.life++;p.vy+=.28;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;cx.save();cx.translate(p.x*k,p.y*k);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r*k/2,-p.r*k/4,p.r*k,p.r*k/2);cx.restore()}
+  raf=parts.length?requestAnimationFrame(tick):0;if(!raf)cx.clearRect(0,0,cv.width,cv.height)}
+
+/* ---------- tricks: hints built from the actual numbers ---------- */
+const ORDER=[0,1,10,2,5,9,4,3,6,8,7];
+function hintFor(a,b,reveal){
+  const lo=Math.min(a,b),hi=Math.max(a,b),p=a*b;
+  if(lo===7&&hi===8)return reveal?`כמו בספירה של ריקוד: ${eq('5, 6, 7, 8!')} כלומר ${eq('56 = 7 × 8')}`:`חשבי על הספירה בריקוד: ${eq('5, 6, 7…')}`;
+  if((a===6||b===6)&&[2,4,6,8].includes(a===6?b:a)){const m=a===6?b:a;
+    return reveal?`6 כפול מספר זוגי נגמר באותו מספר, והעשרות הן חצי ממנו: ${eq(`6 × ${m} = ${6*m}`)}`:`6 כפול מספר זוגי נגמר באותה ספרה (${m}). והעשרות? חצי מ-${m}`}
+  const t=ORDER.find(x=>x===a||x===b), m=t===a?b:a;
+  const R={
+    0:['כל דבר כפול 0 הוא 0','כל דבר כפול 0 הוא 0'],
+    1:[`כפול 1 המספר נשאר אותו דבר`,`כל מספר כפול 1 נשאר אותו דבר: ${eq(`${m} × 1 = ${m}`)}`],
+    10:[`מוסיפים 0 בסוף של ${m}`,`כופלים ב-10? מוסיפים 0 בסוף: ${eq(`${m} × 10 = ${10*m}`)}`],
+    2:[`חברי ${eq(`${m} + ${m}`)}`,`כפול 2 זה לחבר פעמיים: ${eq(`${m} + ${m} = ${2*m}`)}`],
+    5:[`חשבי ${eq(`${m} × 10`)} ואז חצי`,`כפול 5 זה חצי מכפול 10: ${eq(`${m} × 10 = ${10*m}`)}, והחצי הוא ${eq(5*m)}`],
+    9:[`חשבי ${eq(`${m} × 10`)} ואז הורידי ${m}`,`10 פעמים ${m}, פחות ${m} אחד: ${eq(`${10*m} − ${m} = ${9*m}`)}`],
+    4:[`הכפילי את ${m}, ואז הכפילי שוב`,`כפול-כפול: ${eq(`${m} → ${2*m} → ${4*m}`)}`],
+    3:[`${eq(`${m} + ${m}`)} ועוד ${m} אחד`,`כפול 2 ועוד פעם אחת: ${eq(`${2*m} + ${m} = ${3*m}`)}`],
+    6:[`${eq(`${m} × 5`)} ועוד ${m} אחד`,`כפול 5 ועוד פעם אחת: ${eq(`${5*m} + ${m} = ${6*m}`)}`],
+    8:[`הכפילי את ${m} שלוש פעמים`,`להכפיל שלוש פעמים: ${eq(`${m} → ${2*m} → ${4*m} → ${8*m}`)}`],
+    7:[`${eq('5 × 7')} ועוד ${eq('2 × 7')}`,`תאומים! ${eq('5 × 7 = 35')} ועוד ${eq('2 × 7 = 14')}, ביחד ${eq('49')}`],
+  };
+  return R[t][reveal?1:0];
+}
+
+const TRICKS=[
+  {id:'swap',label:'↔',title:'הסוד הגדול',sub:'הסדר לא משנה',drill:{mode:'mix'},
+   body:['<b>3 × 7</b> ו-<b>7 × 3</b> זה בדיוק אותו דבר: 3 שורות של 7, או 7 שורות של 3. סובבי את הציור ותראי.','המשמעות: במקום 100 תרגילים צריך לזכור רק 55! וכשתרגיל נראה קשה, הופכים אותו לקל. 9 × 4 נשמע מסובך? 4 × 9 זה רק כפול-כפול של 9.'],
+   demo:'swap'},
+  {id:'z1',label:'0·1',title:'כפול 0 וכפול 1',sub:'הכי קלים שיש',drill:{mode:'table',n:1},
+   body:['כל מספר כפול 1 נשאר בדיוק אותו מספר. שקית אחת עם 7 סקווישים? 7 סקווישים.','כל מספר כפול 0 הוא 0. אפס שקיות? אין סקווישים בכלל.'],
+   calc:m=>[`${eq(`${m} × 1 = <b>${m}</b>`)}`,`${eq(`${m} × 0 = <b>0</b>`)}`],groups:m=>[[1,'a']]},
+  {id:'t10',label:'×10',title:'כפול 10',sub:'מוסיפים אפס',drill:{mode:'table',n:10},
+   body:['כופלים ב-10? כותבים את המספר ומוסיפים 0 בסוף. 6 × 10 = 60.','זה הבסיס של הרבה טריקים אחרים, אז כדאי שיהיה ממש בטוח.'],
+   calc:m=>[`${m} ועוד 0 בסוף`,`${eq(`${m} × 10 = <b>${10*m}</b>`)}`],groups:m=>[[10,'a']]},
+  {id:'t2',label:'×2',title:'כפול 2',sub:'כמו זוג נעליים',drill:{mode:'table',n:2},
+   body:['כפול 2 זה לחבר את המספר לעצמו. 7 זוגות נעליים = 7 + 7 = 14 נעליים.','התשובות של ×2 תמיד זוגיות: נגמרות ב-0, 2, 4, 6 או 8.'],
+   calc:m=>[`${eq(`${m} + ${m} = <b>${2*m}</b>`)}`],groups:m=>[[1,'a'],[1,'b']]},
+  {id:'t5',label:'×5',title:'כפול 5',sub:'חצי מעשר',drill:{mode:'table',n:5},
+   body:['כפול 5 זה חצי מכפול 10. 8 × 10 = 80, וחצי מ-80 זה 40. אז 8 × 5 = 40.','בונוס: התשובות של ×5 תמיד נגמרות ב-5 או ב-0. ובשעון, כל מספר הוא עוד 5 דקות!'],
+   calc:m=>[eq(`${m} × 10 = ${10*m}`),`חצי מ-${eq(`${10*m} = <b>${5*m}</b>`)}`],groups:m=>[[5,'a'],[5,'ghost']]},
+  {id:'t9',label:'×9',title:'כפול 9',sub:'טריק האצבעות',drill:{mode:'table',n:9},
+   body:['פתחי את 10 האצבעות. כדי לחשב 9 × 4, קפלי את האצבע הרביעית משמאל. האצבעות שמשמאל לה הן העשרות (3) ואלה שמימין הן האחדות (6). יוצא 36!','דרך נוספת: 10 פעמים המספר, פחות פעם אחת. ובדיקה: הספרות של התשובה תמיד מסתכמות ב-9 (3 + 6 = 9).'],
+   demo:'fingers',calc:m=>[eq(`${m} × 10 = ${10*m}`),`${eq(`${10*m} − ${m} = <b>${9*m}</b>`)}`],groups:m=>[[9,'a'],[1,'cross']]},
+  {id:'t4',label:'×4',title:'כפול 4',sub:'כפול-כפול',drill:{mode:'table',n:4},
+   body:['כפול 4 זה להכפיל ב-2, ואז שוב ב-2. 6 → 12 → 24.','כל פעם שמכפילים, הציור גדל פי 2. רואה את שני הצבעים?'],
+   calc:m=>[`${eq(`${m} → ${2*m} → <b>${4*m}</b>`)}`],groups:m=>[[2,'a'],[2,'b']]},
+  {id:'t3',label:'×3',title:'כפול 3',sub:'כפול ועוד אחד',drill:{mode:'table',n:3},
+   body:['כפול 3 = כפול 2 ועוד פעם אחת. 7 × 3: קודם 7 + 7 = 14, ועוד 7 = 21.'],
+   calc:m=>[eq(`${m} × 2 = ${2*m}`),`${eq(`${2*m} + ${m} = <b>${3*m}</b>`)}`],groups:m=>[[2,'a'],[1,'b']]},
+  {id:'t6',label:'×6',title:'כפול 6',sub:'חמש ועוד אחד',drill:{mode:'table',n:6},
+   body:['כפול 6 = כפול 5 ועוד פעם אחת. 6 × 7: חמש פעמים 7 זה 35, ועוד 7 = 42.','טריק בונוס: 6 כפול מספר זוגי נגמר באותו מספר! <span class="ltr">6 × 4 = 24</span>, <span class="ltr">6 × 6 = 36</span>, <span class="ltr">6 × 8 = 48</span>.'],
+   calc:m=>[eq(`${m} × 5 = ${5*m}`),`${eq(`${5*m} + ${m} = <b>${6*m}</b>`)}`],groups:m=>[[5,'a'],[1,'b']]},
+  {id:'t8',label:'×8',title:'כפול 8',sub:'להכפיל שלוש פעמים',drill:{mode:'table',n:8},
+   body:['כפול 8 = להכפיל ב-2 שלוש פעמים. 7 → 14 → 28 → 56.'],
+   calc:m=>[`${eq(`${m} → ${2*m} → ${4*m} → <b>${8*m}</b>`)}`],groups:m=>[[2,'a'],[2,'b'],[4,'c']]},
+  {id:'t7',label:'×7',title:'כפול 7',sub:'5-6-7-8!',drill:{mode:'table',n:7},
+   body:['חדשות טובות: אם את יודעת את כל הטריקים, כמעט כל ×7 כבר אצלך. 7 × 3 = 3 × 7, ו-7 × 9 = 9 × 7.','דרך שתמיד עובדת: 7 = 5 + 2. אז 7 × 6 זה 5 × 6 = 30, ועוד 2 × 6 = 12, ביחד 42.','והכי חשוב, כמו בספירה לפני ריקוד: <span class="ltr">5, 6, 7, 8!</span> כלומר <span class="ltr">56 = 7 × 8</span>.'],
+   calc:m=>[eq(`5 × ${m} = ${5*m}`),eq(`2 × ${m} = ${2*m}`),`${eq(`${5*m} + ${2*m} = <b>${7*m}</b>`)}`],groups:m=>[[5,'a'],[2,'b']]},
+  {id:'sq',label:'n²',title:'תאומים',sub:'מספר כפול עצמו',drill:{mode:'squares'},
+   body:['כשמספר נכפל בעצמו יוצא ריבוע מושלם: <span class="ltr" style="white-space:normal">1, 4, 9, 16, 25, 36, 49, 64, 81, 100</span>.','שימי לב לסוד: ההפרש בין כל ריבוע לבא אחריו גדל ב-2: <span class="ltr">3, 5, 7, 9, 11…</span>'],
+   calc:m=>[`${eq(`${m} × ${m} = <b>${m*m}</b>`)}`],groups:m=>[[m,'a']],square:true},
+];
+
+/* ---------- navigation ---------- */
+let cur='home', R=null, trickId=null, mapSel=null;
+const SCREENS=['home','pick','play','result','tricks','trick','map','squish'];
+const PARENT={pick:'home',play:'pick',result:'home',tricks:'home',trick:'tricks',map:'home',squish:'home'};
+function go(name){
+  cur=name;
+  SCREENS.forEach(s=>{$('#s-'+s).hidden=s!==name});
+  $('#back').hidden=name==='home'||name==='result';
+  ({home:renderHome,pick:renderPick,play:()=>{},result:()=>{},tricks:renderTricks,trick:renderTrick,map:renderMap,squish:renderSquish})[name]();
+  renderTop(); $('#main').scrollTop=0;
+}
+$('#back').innerHTML=ICON.back;
+$('#back').onclick=()=>{if(cur==='play'){R=null;go('pick')}else go(PARENT[cur]||'home')};
+$('#sound').onclick=()=>{S.sound=!S.sound;save();renderTop();if(S.sound)sfx.tap()};
+function renderTop(){
+  $('#chipStars').innerHTML=`<span style="color:var(--gold)">${ICON.star}</span><span class="ltr">${S.stars}</span>`;
+  const st=$('#chipStreak');st.hidden=!(S.streak>1&&S.lastDay>=yesterday());
+  st.innerHTML=`<span style="color:var(--accent)">${ICON.fire}</span>${S.streak} ימים ברצף`;
+  $('#sound').innerHTML=S.sound?ICON.on:ICON.off;$('#sound').setAttribute('aria-pressed',S.sound);
+}
+function applyLook(){const L=LOOKS[S.look]||LOOKS[0];document.documentElement.style.setProperty('--accent',L.a)}
+
+/* ---------- home ---------- */
+const masteredCount=()=>FACTS.filter(k=>box(k)>=4).length;
+const weakFacts=()=>FACTS.filter(k=>S.facts[k]&&S.facts[k].seen>0&&S.facts[k].box<=2).sort((x,y)=>box(x)-box(y)||(S.facts[y].miss-S.facts[x].miss));
+function renderHome(){
+  const li=levelOf(S.stars),L=LEVELS[li],N=LEVELS[li+1];
+  const pct=N?Math.round((S.stars-L[0])/(N[0]-L[0])*100):100;
+  const todayN=S.days[today()]||0, ringPct=Math.min(1,todayN/DAILY_GOAL), C=2*Math.PI*26;
+  const nextTrick=TRICKS.find(t=>!S.tricks[t.id]);
+  const weak=weakFacts();
+  let sug;
+  if(weak.length>=4&&(!nextTrick||S.rounds%2===1))sug={tag:'הצעה להיום',t:'האתגר שלי',d:`${weak.length} תרגילים שעוד מתאמנים עליהם`,act:()=>startRound({mode:'weak'})};
+  else if(nextTrick)sug={tag:'טריק חדש מחכה',t:`${nextTrick.title}: ${nextTrick.sub}`,d:'שתי דקות של סוד, ואז תרגול',act:()=>{trickId=nextTrick.id;go('trick')}};
+  else sug={tag:'הצעה להיום',t:'הכל מעורב',d:'שמירה על הכושר של כל הלוח',act:()=>startRound({mode:'mix'})};
+  $('#s-home').innerHTML=`
+    <div class="hero">
+      <span class="hello">היי יעל, הבמה מחכה לך</span>
+      <h1 class="display">${L[1]}</h1>
+    </div>
+    <div class="card lvl">
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="meta"><span>${N?`עוד <span class="ltr">${N[0]-S.stars}</span> כוכבים ל${N[1]}`:'הגעת לפסגה!'}</span><span>שלב ${li+1} מתוך ${LEVELS.length}</span></div>
+    </div>
+    <button class="btn cta" id="playBtn">${ICON.mic} עולים לבמה!</button>
+    <button class="card suggest" id="sugBtn"><div style="display:flex;flex-direction:column;min-width:0"><span class="tag">${sug.tag}</span><b>${sug.t}</b><small class="muted">${sug.d}</small></div><span class="go">‹</span></button>
+    <div class="card today">
+      <svg class="ring" viewBox="0 0 64 64"><circle class="bgc" cx="32" cy="32" r="26"/><circle class="fgc" cx="32" cy="32" r="26" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-ringPct)}" transform="rotate(-90 32 32)"/><text x="32" y="39" text-anchor="middle">${todayN}</text></svg>
+      <div class="txt"><b>${todayN>=DAILY_GOAL?'עשית את המטרה של היום!':'המטרה של היום'}</b><span class="muted">${todayN>=DAILY_GOAL?'כל תשובה נוספת היא בונוס':`${DAILY_GOAL} תשובות, נשארו <span class="ltr">${DAILY_GOAL-todayN}</span>`}</span></div>
+    </div>
+    <div class="tiles">
+      <button class="tile" data-go="tricks"><span class="ic">${ICON.bulb}</span><b>טריקים</b><small>${Object.keys(S.tricks).length} מתוך ${TRICKS.length} סודות</small></button>
+      <button class="tile" data-go="map"><span class="ic">${ICON.grid}</span><b>המפה שלי</b><small>שולטת ב-${masteredCount()} מתוך ${FACTS.length}</small></button>
+      <button class="tile" data-go="squish"><span class="ic sq">${sqSVG(SQ[Math.max(0,S.owned-1)])}</span><b>הסקווישים</b><small>${S.owned} מתוך ${SQ.length} באוסף</small></button>
+      <button class="tile" data-go="pick"><span class="ic">${ICON.target}</span><b>לוח לבחירה</b><small>מתאמנים על מספר אחד</small></button>
+    </div>
+    <span class="sec-title">הלוק שלי</span>
+    <div class="looks">${LOOKS.map((l,i)=>`<button class="look" data-look="${i}" aria-pressed="${S.look===i}" ${S.stars<l.at?'disabled':''}><i style="background:${l.a}"></i>${S.stars<l.at?`${l.at} ★`:l.n}</button>`).join('')}</div>`;
+  $('#playBtn').onclick=()=>go('pick');
+  $('#sugBtn').onclick=sug.act;
+  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=+b.dataset.look;save();pushRemote();applyLook();renderHome();sfx.tap()});
+}
+
+/* ---------- pick ---------- */
+function tableMastery(n){let s=0;for(let k=1;k<=10;k++)s+=Math.min(4,box(key(n,k)));return s/40}
+function renderPick(){
+  const w=weakFacts().length;
+  $('#s-pick').innerHTML=`
+    <h2 class="display">איזה שיר שרים?</h2>
+    <div class="modes">
+      <button class="mode" id="mWeak"><span class="ic">${ICON.target}</span><div><b>האתגר שלי</b><small>${w?`התרגילים שהכי צריכים חזרה (${w})`:'התרגילים שהכי צריכים חזרה'}</small></div></button>
+      <button class="mode" id="mMix"><span class="ic">${ICON.shuffle}</span><div><b>הכל מעורב</b><small>10 תרגילים מכל הלוח</small></div></button>
+    </div>
+    <span class="sec-title">או לוח אחד</span>
+    <div class="tables">${range(1,10).map(n=>{const p=tableMastery(n);return `<button class="tbl" data-n="${n}" aria-label="לוח ${n}"><span class="fill" style="height:${p*100}%"></span><b>${n}</b><small>${Math.round(p*100)}%</small></button>`}).join('')}</div>`;
+  $('#mWeak').onclick=()=>startRound({mode:'weak'});
+  $('#mMix').onclick=()=>startRound({mode:'mix'});
+  document.querySelectorAll('.tbl').forEach(b=>b.onclick=()=>startRound({mode:'table',n:+b.dataset.n}));
+}
+
+/* ---------- round engine ---------- */
+function weightedPick(keys,n,exclude=new Set()){
+  const pool=keys.filter(k=>!exclude.has(k)).map(k=>{const f=S.facts[k],b=f?.box||0;const[a]=k.split('x').map(Number);
+    let w=(6-b)**2;if(!f||!f.seen)w*=1.3;if(a===1)w*=.25;return{k,w}});
+  const out=[];
+  while(out.length<n&&pool.length){let t=Math.random()*pool.reduce((s,p)=>s+p.w,0),i=0;while((t-=pool[i].w)>0&&i<pool.length-1)i++;out.push(pool.splice(i,1)[0].k)}
+  return out;
+}
+function orient(k){const[a,b]=k.split('x').map(Number);return Math.random()<.5?[a,b]:[b,a]}
+function buildPairs(o){
+  if(o.mode==='table'){const n=o.n;return shuffle(range(1,10)).slice(0,o.count||10).map(k=>Math.random()<.7?[n,k]:[k,n])}
+  if(o.mode==='squares')return shuffle(range(2,10)).slice(0,8).map(k=>[k,k]);
+  let keys=[];
+  if(o.mode==='weak')keys=weakFacts().slice(0,10);
+  keys=keys.concat(weightedPick(FACTS,10-keys.length,new Set(keys)));
+  return shuffle(keys).map(orient);
+}
+function startRound(o){
+  const pairs=buildPairs(o);
+  R={o,queue:pairs.map(([a,b],i)=>({a,b,i,tries:0})),total:pairs.length,lights:pairs.map(()=>''),firstOk:0,streak:0,best:0,fresh:[],q:null,input:'',locked:false,hinted:false,t0:0,beforeLevel:levelOf(S.stars)};
+  go('play');renderPlayShell();nextQ();
+}
+const PRAISE=['יש!','מדהים!','בול!','כוכבת!','וואו!','מושלם!','איזה ביצוע!','הקהל בטירוף!','שאפו!'];
+const PAD=['1','2','3','4','5','6','7','8','9','hint','0','del'];
+function renderPlayShell(){
+  $('#s-play').innerHTML=`
+    <div class="lights" id="lights"></div>
+    <div class="crowd">
+      <div class="fan" id="fanSol">${FAN.sol}<span>סול</span></div>
+      <div class="meter"><div class="bar"><i id="meter" style="width:0"></i></div><span>מד הקהל</span></div>
+      <div class="fan" id="fanBerry">${FAN.berry}<span>ברי</span></div>
+    </div>
+    <div class="qcard" id="qcard">
+      <div class="eq"><span id="qa"></span><span class="x">×</span><span id="qb"></span></div>
+      <div class="ans empty" id="ans">?</div>
+      <div class="hintline" id="hintline"></div>
+    </div>
+    <div id="fb" class="fb" hidden></div>
+    <div class="pad" id="pad">${PAD.map(k=>`<button class="key ${k.length>1?'k-'+k:''}" data-k="${k}" ${k==='del'?'aria-label="מחיקה"':''}>${k==='hint'?ICON.bulb+'רמז':k==='del'?ICON.del:k}</button>`).join('')}</div>`;
+  $('#pad').onclick=e=>{const b=e.target.closest('[data-k]');if(b)press(b.dataset.k)};
+}
+function drawLights(){$('#lights').innerHTML=R.lights.map((s,i)=>`<i class="${s||(R.q&&R.q.i===i?'now':'')}"></i>`).join('')}
+function drawAns(){const el=$('#ans');el.textContent=R.input||'?';el.classList.toggle('empty',!R.input)}
+function nextQ(){
+  if(!R)return;
+  if(!R.queue.length)return finishRound();
+  R.q=R.queue.shift();R.input='';R.locked=false;R.hinted=false;R.t0=Date.now();
+  $('#qa').textContent=R.q.a;$('#qb').textContent=R.q.b;$('#hintline').innerHTML='';
+  $('#fb').hidden=true;$('#pad').hidden=false;$('#qcard').classList.remove('good','shake');
+  $('#qcard').querySelector('.praise')?.remove();
+  drawAns();drawLights();
+}
+function press(k){
+  if(!R||R.locked)return;
+  if(k==='del'){R.input=R.input.slice(0,-1);drawAns();return}
+  if(k==='hint'){R.hinted=true;$('#hintline').innerHTML=ICON.bulb.replace('<svg','<svg style="width:18px;height:18px;vertical-align:-3px;color:var(--gold)"')+' '+hintFor(R.q.a,R.q.b,false);sfx.tap();return}
+  if(R.input.length>=3)return;
+  R.input+=k;drawAns();
+  if(R.input.length>=String(R.q.a*R.q.b).length)check();
+}
+function fanSay(id,txt){const f=$(id);f.classList.remove('hop');void f.offsetWidth;f.classList.add('hop');if(txt){f.querySelector('.say')?.remove();f.insertAdjacentHTML('beforeend',`<span class="say">${txt}</span>`);setTimeout(()=>f.querySelector('.say')?.remove(),1800)}}
+function check(){
+  R.locked=true;
+  const q=R.q,ok=+R.input===q.a*q.b,k=key(q.a,q.b),f=F(k),dt=Date.now()-R.t0;
+  const first=q.tries===0;
+  if(first)f.seen++;
+  S.answers++;S.days[today()]=(S.days[today()]||0)+1;
+  if(ok){
+    f.ok++;
+    if(first&&!R.hinted){if(dt<6000)f.box=Math.min(5,f.box+1);else if(f.box<2)f.box++;R.firstOk++;if(f.box===4&&!R.fresh.includes(k))R.fresh.push(k)}
+    R.lights[q.i]=(first&&!R.hinted)?'ok':'fix';
+    R.streak++;R.best=Math.max(R.best,R.streak);
+    sfx.good(R.streak-1);buzz(15);
+    $('#qcard').classList.add('good');
+    $('#qcard').insertAdjacentHTML('afterbegin',`<span class="praise">${PRAISE[rnd(PRAISE.length)]}</span>`);
+    $('#meter').style.width=Math.min(100,R.streak*12)+'%';
+    if(R.streak===3)fanSay('#fanSol','יאללה יעל!');
+    else if(R.streak===5)fanSay('#fanBerry','אגו! גו!');
+    else if(R.streak===8){fanSay('#fanSol','עוד! עוד!');fanSay('#fanBerry','');}
+    else if(R.streak%2===0)fanSay(Math.random()<.5?'#fanSol':'#fanBerry','');
+    if(R.streak>=5&&R.streak%5===0)confetti(40);
+    save();drawLights();
+    setTimeout(nextQ,first?650:900);
+  }else{
+    if(first){f.miss++;f.box=Math.max(0,f.box-2)}
+    q.tries++;R.streak=0;$('#meter').style.width='0';
+    if(!R.lights[q.i])R.lights[q.i]='miss';
+    if(q.tries<3)R.queue.splice(Math.min(2,R.queue.length),0,q);
+    sfx.bad();buzz([30,40,30]);
+    $('#qcard').classList.add('shake');
+    save();drawLights();
+    $('#pad').hidden=true;
+    $('#fb').hidden=false;
+    $('#fb').innerHTML=`<div class="card">
+        <div class="muted">כמעט! התשובה הנכונה:</div>
+        <div class="big">${eq(`${q.a} × ${q.b} = ${q.a*q.b}`)}</div>
+        <div class="tip">${ICON.bulb}<span>${hintFor(q.a,q.b,true)}</span></div>
+      </div>
+      <button class="btn" id="cont">הבנתי, ממשיכים</button>`;
+    $('#cont').onclick=()=>{sfx.tap();nextQ()};
+    $('#cont').focus({preventScroll:true});
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(cur!=='play'||!R)return;
+  if(/^[0-9]$/.test(e.key))press(e.key);
+  else if(e.key==='Backspace')press('del');
+  else if(e.key==='Enter'&&!$('#fb').hidden)nextQ();
+});
+
+function finishRound(){
+  const r=R;R=null;
+  const acc=r.firstOk/r.total, stars=acc>=.9?3:acc>=.7?2:1;
+  const beforeOwned=S.owned, beforeLooks=LOOKS.filter(l=>S.stars>=l.at).length;
+  S.stars+=stars;S.rounds++;
+  const t=today();if(S.lastDay!==t){S.streak=S.lastDay===yesterday()?S.streak+1:1;S.lastDay=t}
+  S.owned=Math.min(SQ.length,Math.max(S.owned,1+Math.floor(S.stars/STARS_PER_SQUISHY)));
+  if(r.o.trick)S.tricks[r.o.trick]=true;
+  save();pushRemote();
+  const newSq=range(beforeOwned,S.owned-1).map(i=>SQ[i]);
+  const newLooks=LOOKS.filter(l=>S.stars>=l.at).length>beforeLooks;
+  const li=levelOf(S.stars), levelUp=li>r.beforeLevel;
+  const title=stars===3?'הופעה מושלמת!':stars===2?'איזה ביצוע!':'כל הכבוד על האימון!';
+  go('result');
+  $('#s-result').innerHTML=`
+    <h2 class="display">${title}</h2>
+    <div class="bigstars">${[0,1,2].map(i=>ICON.star.replace('<svg',`<svg class="${i<stars?'on':''}"`)).join('')}</div>
+    ${levelUp?`<div class="card" style="width:100%;border:2px solid var(--accent)"><b>עלית שלב!</b> עכשיו את ב<b>${LEVELS[li][1]}</b></div>`:''}
+    <div class="stats">
+      <div class="stat"><b class="ltr">${r.firstOk}/${r.total}</b><small>נכון בפעם הראשונה</small></div>
+      <div class="stat"><b class="ltr">${r.best}</b><small>הרצף הכי ארוך</small></div>
+    </div>
+    ${r.fresh.length?`<div style="display:flex;flex-direction:column;gap:6px;align-items:center"><span class="muted">תרגילים שעכשיו את שולטת בהם:</span><div class="facts">${r.fresh.map(k=>{const[a,b]=k.split('x');return `<span class="ltr">${a} × ${b} = ${a*b}</span>`}).join('')}</div></div>`:''}
+    ${newSq.map(q=>`<div class="card unlock">${sqSVG(q)}<div><span class="muted">סקווישי חדש הצטרף לאוסף!</span><h3 style="font-size:26px">${q.n}</h3></div></div>`).join('')}
+    ${newLooks?`<div class="card" style="width:100%">נפתח לוק חדש! אפשר לבחור אותו בעמוד הבית.</div>`:''}
+    ${!newSq.length&&S.owned<SQ.length?`<p class="muted">עוד <span class="ltr">${S.owned*STARS_PER_SQUISHY-S.stars}</span> כוכבים לסקווישי הבא</p>`:''}
+    <div class="btns">
+      <button class="btn" id="again">${ICON.mic} הדרן! עוד סיבוב</button>
+      <button class="btn ghost" id="home">לחדר ההלבשה</button>
+    </div>`;
+  $('#again').onclick=()=>startRound(r.o.trick?{mode:'mix'}:r.o);
+  $('#home').onclick=()=>go('home');
+  sfx.fanfare();confetti(stars===3?140:80);
+}
+
+/* ---------- tricks ---------- */
+function renderTricks(){
+  $('#s-tricks').innerHTML=`
+    <h2 class="display">ארגז הסודות</h2>
+    <p class="muted">כל טריק הופך תרגילים קשים לקלים. כדאי לעבור לפי הסדר.</p>
+    <div class="tlist">${TRICKS.map(t=>`<button class="trow" data-t="${t.id}"><span class="num">${t.label}</span><div><b>${t.title}</b><small>${t.sub}</small></div>${S.tricks[t.id]?`<span class="done">${ICON.check}</span>`:''}</button>`).join('')}</div>`;
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{trickId=b.dataset.t;go('trick')});
+}
+let demoM=4,swapRot=false;
+function dotsHTML(rows,cols,groups){
+  let cls=[];groups.forEach(([n,c])=>{for(let i=0;i<n;i++)cls.push(c)});
+  let h='';for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)h+=`<i class="${cls[r]||'a'}"></i>`;
+  return `<div class="dots" style="grid-template-columns:repeat(${cols},14px)">${h}</div>`;
+}
+function renderTrick(){
+  const t=TRICKS.find(x=>x.id===trickId);if(!t)return go('tricks');
+  $('#s-trick').innerHTML=`
+    <h2 class="display">${t.title}</h2>
+    <span class="muted" style="margin-top:-8px">${t.sub}</span>
+    <div class="body">${t.body.map(p=>`<p>${bidi(p)}</p>`).join('')}</div>
+    <div class="card demo" id="demo"></div>
+    <button class="btn" id="drill">${ICON.mic} בואי נתרגל את זה</button>`;
+  demoM=t.id==='swap'?7:4;swapRot=false;
+  drawDemo(t);
+  $('#drill').onclick=()=>startRound(Object.assign({},t.drill,{count:8,trick:t.id}));
+}
+function drawDemo(t){
+  const d=$('#demo');
+  if(t.demo==='fingers'&&!d.dataset.f){
+    d.dataset.f=1;
+    const nails=['#FF5C9A','#B98CE0','#FFB020','#4CC9A0','#5AAEFF','#5AAEFF','#4CC9A0','#FFB020','#B98CE0','#FF5C9A'];
+    const hs=[70,92,100,94,60,60,94,100,92,70];
+    d.insertAdjacentHTML('beforebegin',`<div class="card demo"><b>טריק האצבעות: הקישי על אצבע</b><div class="fingers"><div class="hand">${range(1,5).map(i=>`<button class="finger" data-f="${i}" style="height:${hs[i-1]}px;--nail:${nails[i-1]}" aria-label="אצבע ${i}"><span>${i}</span></button>`).join('')}</div><div class="hand">${range(6,10).map(i=>`<button class="finger" data-f="${i}" style="height:${hs[i-1]}px;--nail:${nails[i-1]}" aria-label="אצבע ${i}"><span>${i}</span></button>`).join('')}</div></div><div class="finger-out" id="fout">איזו אצבע לקפל?</div></div>`);
+    document.querySelectorAll('.finger').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.f;document.querySelectorAll('.finger').forEach(x=>x.classList.toggle('down',x===b));sfx.good(i-1);
+      $('#fout').innerHTML=`${i-1} אצבעות משמאל (עשרות), ${10-i} מימין (אחדות)<br><b style="color:var(--accent);font-size:24px">${eq(`9 × ${i} = ${9*i}`)}</b>`;
+    });
+  }
+  const m=demoM;
+  let eqTxt,grid,lines;
+  if(t.id==='swap'){
+    const r=swapRot?m:3,c=swapRot?3:m;
+    eqTxt=`${r} × ${c}`;grid=dotsHTML(r,c,[[r,'a']]);lines=[`${eq(`${r} × ${c} = <b>${3*m}</b>`)}`];
+  }else{
+    const n=t.square?m:+t.drill.n||1;
+    eqTxt=t.square?`${m} × ${m}`:`${n} × ${m}`;
+    const g=t.groups(m),rows=g.reduce((s,x)=>s+x[0],0);
+    grid=dotsHTML(t.square?m:rows,m,g);lines=t.calc(m);
+  }
+  d.innerHTML=`
+    <div class="stepper"><button id="mMinus" aria-label="פחות">−</button><span class="eqs">${eqTxt}</span><button id="mPlus" aria-label="יותר">+</button></div>
+    <div class="calc">${lines.map(l=>`<span>${l}</span>`).join('')}</div>
+    <div style="max-width:100%;overflow-x:auto">${grid}</div>
+    ${t.id==='swap'?`<button class="btn ghost" id="rot">${ICON.shuffle} סובבי את הציור</button>`:''}`;
+  $('#mMinus').onclick=()=>{demoM=Math.max(1,demoM-1);sfx.tap();drawDemo(t)};
+  $('#mPlus').onclick=()=>{demoM=Math.min(10,demoM+1);sfx.tap();drawDemo(t)};
+  if($('#rot'))$('#rot').onclick=()=>{swapRot=!swapRot;sfx.tap();drawDemo(t)};
+}
+
+/* ---------- map ---------- */
+const LVL_NAMES=['עוד לא ניסינו','מתחילות','מתקדמות','כמעט','שולטת!'];
+function lvlClass(k){const f=S.facts[k];if(!f||!f.seen)return '';const b=f.box;return b>=4?'l4':b>=3?'l3':b>=2?'l2':'l1'}
+function renderMap(){
+  const m=masteredCount();
+  let g='<span class="h" style="color:var(--muted)">×</span>'+range(1,10).map(n=>`<span class="h">${n}</span>`).join('');
+  for(let a=1;a<=10;a++){g+=`<span class="h">${a}</span>`;for(let b=1;b<=10;b++)g+=`<button class="cell ${lvlClass(key(a,b))}" data-a="${a}" data-b="${b}" aria-label="${a} כפול ${b}">${a*b}</button>`}
+  $('#s-map').innerHTML=`
+    <h2 class="display">המפה שלי</h2>
+    <div class="stats">
+      <div class="stat"><b class="ltr">${m}/${FACTS.length}</b><small>תרגילים שאת שולטת בהם</small></div>
+      <div class="stat"><b class="ltr">${S.answers}</b><small>תשובות בסך הכל</small></div>
+      <div class="stat"><b class="ltr">${S.rounds}</b><small>הופעות</small></div>
+      <div class="stat"><b class="ltr">${S.streak}</b><small>ימים ברצף</small></div>
+    </div>
+    <div class="grid10">${g}</div>
+    <div class="legend">${['','l1','l2','l3','l4'].map((c,i)=>`<span><i class="cell ${c}" style="aspect-ratio:auto"></i>${LVL_NAMES[i]}</span>`).join('')}</div>
+    <div class="card info" id="info"><span class="muted">הקישי על משבצת כדי לראות פרטים וטריק.</span></div>
+    <p class="muted" style="font-size:14px">טיפ: ${eq('3 × 7')} ו-${eq('7 × 3')} נספרים יחד, ולכן יש 55 תרגילים ולא 100.</p>`;
+  document.querySelectorAll('.cell[data-a]').forEach(c=>c.onclick=()=>{
+    document.querySelectorAll('.cell.sel').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');
+    const a=+c.dataset.a,b=+c.dataset.b,f=S.facts[key(a,b)];
+    $('#info').innerHTML=`<b style="font-size:22px">${eq(`${a} × ${b} = ${a*b}`)}</b>
+      <div class="muted">${f&&f.seen?`ענית נכון ${f.ok} פעמים, טעית ${f.miss} · ${LVL_NAMES[lvlClass(key(a,b))?(+lvlClass(key(a,b))[1]):0]}`:'עוד לא תרגלת את זה'}</div>
+      <div style="margin-top:6px">${hintFor(a,b,true)}</div>`;
+  });
+}
+
+/* ---------- squishies ---------- */
+function renderSquish(){
+  $('#s-squish').innerHTML=`
+    <h2 class="display">האוסף שלי</h2>
+    <p class="muted">כל ${STARS_PER_SQUISHY} כוכבים מביאים סקווישי חדש. הקישי עליהם כדי למעוך!</p>
+    <div class="sqgrid">${SQ.map((q,i)=>i<S.owned?`<button class="sq" data-i="${i}">${sqSVG(q)}<b>${q.n}</b></button>`:`<div class="sq locked">${sqSVG(q)}<b>?</b><small>ב-${i*STARS_PER_SQUISHY} ★</small></div>`).join('')}</div>`;
+  document.querySelectorAll('button.sq').forEach(b=>b.onclick=()=>{b.classList.remove('squish');void b.offsetWidth;b.classList.add('squish');sfx.squeak();buzz(20)});
+}
+
+/* ---------- boot ---------- */
+applyLook();go('home');
+</script>
