@@ -431,22 +431,70 @@ const F=k=>S.facts[k]||(S.facts[k]={box:0,seen:0,ok:0,miss:0});
 const box=k=>S.facts[k]?.box||0;
 function save(){S.updated=Date.now();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 
-/* Optional cloud copy for a signed-in viewer, private to her (data/users/<id>/). Local storage stays the source on the device. */
-let remoteRef=null,writing=false,again=false;
-async function pushRemote(){
-  if(!remoteRef)return; if(writing){again=true;return}
-  writing=true;try{await remoteRef.set({state:JSON.stringify(S),updated:S.updated})}catch(e){}
-  writing=false;if(again){again=false;pushRemote()}
+/* ---------- progress sync ---------- */
+// KidSync: progress that follows the kid across browsers (WhatsApp's in-app browser, Chrome, Safari) and devices.
+// Copy this file's contents into the game's <script>. Personal link: https://tomenden.github.io/<game>/#<code>
+// The code is remembered locally, so later opens without the #code keep working in that browser.
+globalThis.KidSync = (game, api = 'https://kids-sync.enden-tom.workers.dev') => {
+  const KEY = 'kidsync-code', VALID = /^[a-z0-9-]{6,40}$/;
+  const fromHash = decodeURIComponent(location.hash.slice(1)).trim().toLowerCase();
+  let code = VALID.test(fromHash) ? fromHash : null;
+  try { if (code) localStorage.setItem(KEY, code); else code = localStorage.getItem(KEY); } catch (e) {}
+  const url = () => `${api}/${game}/${code}`;
+  return {
+    get code() { return code; },
+    setCode(c) {
+      c = String(c).trim().toLowerCase();
+      if (!VALID.test(c)) return false;
+      code = c;
+      try { localStorage.setItem(KEY, c); } catch (e) {}
+      return true;
+    },
+    // Remote state, or null when there is no code, no network, or nothing saved yet.
+    async load() {
+      if (!code) return null;
+      try { const r = await fetch(url(), {cache: 'no-store'}); return r.ok ? await r.json() : null; } catch (e) { return null; }
+    },
+    // Fire-and-forget. text/plain body keeps it a CORS "simple request" (no preflight); keepalive survives page close.
+    save(state) {
+      if (!code) return;
+      try { fetch(url(), {method: 'PUT', body: JSON.stringify(state), keepalive: true}).catch(() => {}); } catch (e) {}
+    },
+  };
+};
+const sync=KidSync('kefel');
+// Keeps both sides' gains: per fact the record with more practice wins, totals take the max.
+function mergeState(a,b){
+  if(!b||b.v!==1)return a;
+  const m=Object.assign(freshState(),a);
+  m.facts={};
+  for(const k of new Set([...Object.keys(a.facts||{}),...Object.keys(b.facts||{})])){
+    const x=a.facts?.[k],y=b.facts?.[k];
+    m.facts[k]=!x?y:!y?x:(y.seen>x.seen||(y.seen===x.seen&&y.box>x.box))?y:x;
+  }
+  for(const f of ['stars','rounds','answers','best60','owned'])m[f]=Math.max(a[f]||0,b[f]||0);
+  m.days=Object.assign({},a.days);for(const[d,n]of Object.entries(b.days||{}))m.days[d]=Math.max(m.days[d]||0,n);
+  m.tricks=Object.assign({},a.tricks,b.tricks);
+  if((b.lastDay||'')>(a.lastDay||'')){m.lastDay=b.lastDay;m.streak=b.streak}
+  else if(b.lastDay===a.lastDay)m.streak=Math.max(a.streak||0,b.streak||0);
+  m.giftDay=(b.giftDay||'')>(a.giftDay||'')?b.giftDay:a.giftDay;
+  if((b.updated||0)>(a.updated||0)){m.look=b.look;m.sound=b.sound}
+  m.updated=Math.max(a.updated||0,b.updated||0);
+  return m;
 }
-(async()=>{try{
-  if(!window.claude?.use)return;
-  const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
-  if(!db||!user)return; const id=await user.id(); if(!id)return;
-  const ref=db.doc('data/users/'+id+'/progress');
-  const snap=await ref.get(); const d=snap.data?.();
-  if(d&&d.state&&(d.updated||0)>(S.updated||0)){const r=JSON.parse(d.state);if(r&&r.v===1){S=Object.assign(freshState(),r);try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){};applyLook();if(!R)go(cur)}}
-  remoteRef=ref; if(!d||(S.updated||0)>(d.updated||0))pushRemote();
-}catch(e){}})();
+// The server is written only after a successful read, so a dropped connection can never replace her progress with less.
+let remoteOK=false;
+async function pullSync(){
+  if(!sync.code)return;
+  try{
+    const r=await fetch(`https://kids-sync.enden-tom.workers.dev/kefel/${sync.code}`,{cache:'no-store'});
+    if(!r.ok)return;
+    const remote=await r.json();remoteOK=true;
+    if(remote){S=mergeState(S,remote);try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){};applyLook();if(!R){cur==='home'?renderHome():go(cur);renderTop()}}
+    sync.save(S); // first open with a code uploads what this browser had
+  }catch(e){}
+}
+function pushSync(){if(!sync.code)return;if(!remoteOK)return pullSync();sync.save(S)}
 
 /* ---------- sound ---------- */
 let AC=null;
@@ -647,7 +695,7 @@ function wireStage(){
   if(ev.k==='dance'&&!ev.played){ev.played=true;[523.25,587.33,659.25,783.99].forEach((f,i)=>tone(f,i*.18,.3,'triangle',.15))}
 }
 function openGift(){
-  S.giftDay=today();const g=grantStars(1);save();pushRemote();
+  S.giftDay=today();const g=grantStars(1);save();pushSync();
   sfx.fanfare();confetti(90);
   homeEv={k:'gifted',sq:g.newSq.length?S.owned-1:rnd(S.owned),text:g.newSq.length?`וגם ${g.newSq[0].n} הצטרפה לאוסף!`:'מחר מחכה כאן הפתעה חדשה'};
   renderHome();renderTop();
@@ -700,7 +748,7 @@ function renderHome(){
   $('#playBtn').onclick=()=>go('pick');
   $('#sugBtn').onclick=sug.act;
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
-  document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=+b.dataset.look;save();pushRemote();applyLook();renderHome();sfx.tap()});
+  document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=+b.dataset.look;save();pushSync();applyLook();renderHome();sfx.tap()});
   wireStage();
 }
 
@@ -898,7 +946,7 @@ function finishRound(){
   const t=today();if(S.lastDay!==t){S.streak=S.lastDay===yesterday()?S.streak+1:1;S.lastDay=t}
   const g=grantStars(stars);
   if(r.o.trick)S.tricks[r.o.trick]=true;
-  save();pushRemote();
+  save();pushSync();
   if(!r.sprint)stats[3][0]=`${masteredCount()}/${FACTS.length}`;
   const top=Object.entries(r.missT).sort((x,y)=>y[1]-x[1])[0];
   const sugT=top&&top[1]>=2?TRICKS.find(x=>x.id===top[0]):null;
@@ -1025,5 +1073,5 @@ function renderSquish(){
 }
 
 /* ---------- boot ---------- */
-applyLook();go('home');
+applyLook();go('home');pullSync();
 </script>
