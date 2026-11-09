@@ -280,6 +280,19 @@ p{margin:0}
 
 .toast{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
   padding:8px 16px;border-radius:99px;font-weight:600;font-size:15px;z-index:60;animation:pop .3s ease}
+.sq .type{font-size:11px;color:var(--muted);margin-top:-2px}
+.sqplay{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:12px;
+  padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sqp-top{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center}
+.sqp-stage{flex:1;min-height:0;width:100%;max-width:520px;display:grid;place-items:center;position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;
+  background:radial-gradient(55% 45% at 50% 60%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 72%)}
+.sqp-body{width:min(78vw,320px,52vh);max-width:100%;aspect-ratio:1;transform-origin:50% 92%;will-change:transform}
+.sqp-body svg{width:100%;height:100%;pointer-events:none}
+.sqp-info{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+.sqp-info b{font-size:26px}
+.sqp-nav{display:flex;gap:10px;width:100%;max-width:520px}
+.sqp-nav .btn{flex:1}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -304,6 +317,7 @@ p{margin:0}
     <section class="screen" id="s-squish" hidden></section>
   </main>
 </div>
+<div class="sqplay" id="sqplay" hidden></div>
 <canvas id="confetti"></canvas>
 
 <script>
@@ -349,19 +363,29 @@ const FAN={
 const GIFT='<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="93" rx="32" ry="4" fill="#000" opacity=".12"/><rect x="18" y="44" width="64" height="46" rx="8" fill="#FF5C9A"/><rect x="12" y="32" width="76" height="16" rx="6" fill="#FF86B6"/><rect x="45" y="32" width="10" height="58" fill="#FFD36B"/><path d="M50 32C40 14 24 18 30 28C34 34 44 32 50 32ZM50 32C60 14 76 18 70 28C66 34 56 32 50 32Z" fill="#FFD36B"/></svg>';
 
 /* ---------- squishies ---------- */
-const SQ=[
-  {n:'פופי',c:'#FF9EC4',s:'round'},{n:'מיצי',c:'#FFC59E',s:'cat'},{n:'תותית',c:'#FF6B8A',s:'berry'},
-  {n:'ענני',c:'#A9D8FF',s:'cloud'},{n:'דובון',c:'#E0B084',s:'bear'},{n:'לולו',c:'#CDB4FF',s:'bunny'},
-  {n:'מנטה',c:'#9FE8C8',s:'round'},{n:'פנדי',c:'#FFFFFF',s:'panda'},{n:'אבוקדי',c:'#B5DE7A',s:'avo'},
-  {n:'לימונית',c:'#FFE680',s:'round'},{n:'שזיפי',c:'#C49BEA',s:'cat'},{n:'מרשמלו',c:'#FFF0DE',s:'mallow'},
-  {n:'קוקו',c:'#FFF7FB',s:'bunny'},{n:'פטל',c:'#E8457C',s:'berry'},{n:'נצנצית',c:'#FFC8E8',s:'glitter'},
-  {n:'יוניקורנית',c:'#FFFFFF',s:'unicorn'},
-  {n:'לבבי',c:'#FF8FB8',s:'heart',acc:'bow'},{n:'טיפה',c:'#8FD3FF',s:'drop'},{n:'ג׳לי',c:'#B8F28F',s:'jelly'},
-  {n:'מלכה',c:'#FFD1E8',s:'cat',acc:'crown'},{n:'דיג׳יי',c:'#C9B8FF',s:'bear',acc:'headphones'},{n:'סטארית',c:'#FFE08A',s:'round',acc:'sunnies'},
-  {n:'פרחונית',c:'#FFB8A8',s:'bunny',acc:'flower'},{n:'אפרסקי',c:'#FFC49A',s:'heart'},{n:'גלידי',c:'#FFE3F1',s:'drop',acc:'bow'},
-  {n:'מוצ׳י',c:'#F3EAFF',s:'mallow',acc:'flower'},{n:'בננית',c:'#FFF08A',s:'jelly',acc:'sunnies'},{n:'קשתית',c:'#FFFFFF',s:'heart',acc:'rainbow'},
-  {n:'כוכבת רוק',c:'#FF7FAF',s:'cat',acc:'headphones'},{n:'נסיכת הבמה',c:'#FFE6A8',s:'unicorn',acc:'crown'},
+// t = how it feels to squish (see TYPES). The first two stay first: Yael already owns them.
+const SQ_BASE=[
+  {n:'פופי',c:'#FF9EC4',s:'round',t:'foam'},{n:'מיצי',c:'#FFC59E',s:'cat',t:'foam'},{n:'תותית',c:'#FF6B8A',s:'berry',t:'foam'},
+  {n:'ענני',c:'#A9D8FF',s:'cloud',t:'butter'},{n:'דובון',c:'#E0B084',s:'bear',t:'foam'},{n:'לולו',c:'#CDB4FF',s:'bunny',t:'foam'},
+  {n:'מנטה',c:'#9FE8C8',s:'round',t:'nido'},{n:'פנדי',c:'#FFFFFF',s:'panda',t:'foam'},{n:'אבוקדי',c:'#B5DE7A',s:'avo',t:'butter'},
+  {n:'לימונית',c:'#FFE680',s:'round',t:'jelly'},{n:'שזיפי',c:'#C49BEA',s:'cat',t:'nido'},{n:'מרשמלו',c:'#FFF0DE',s:'mallow',t:'butter'},
+  {n:'קוקו',c:'#FFF7FB',s:'bunny',t:'foam'},{n:'פטל',c:'#E8457C',s:'berry',t:'crunchy'},{n:'נצנצית',c:'#FFC8E8',s:'glitter',t:'jelly'},
+  {n:'יוניקורנית',c:'#FFFFFF',s:'unicorn',t:'foam'},
+  {n:'לבבי',c:'#FF8FB8',s:'heart',acc:'bow',t:'nido'},{n:'טיפה',c:'#8FD3FF',s:'drop',t:'water'},{n:'ג׳לי',c:'#B8F28F',s:'jelly',t:'jelly'},
+  {n:'מלכה',c:'#FFD1E8',s:'cat',acc:'crown',t:'foam'},{n:'דיג׳יי',c:'#C9B8FF',s:'bear',acc:'headphones',t:'crunchy'},{n:'סטארית',c:'#FFE08A',s:'round',acc:'sunnies',t:'mochi'},
+  {n:'פרחונית',c:'#FFB8A8',s:'bunny',acc:'flower',t:'foam'},{n:'אפרסקי',c:'#FFC49A',s:'heart',t:'butter'},{n:'גלידי',c:'#FFE3F1',s:'drop',acc:'bow',t:'water'},
+  {n:'מוצ׳י',c:'#F3EAFF',s:'mallow',acc:'flower',t:'mochi'},{n:'בננית',c:'#FFF08A',s:'jelly',acc:'sunnies',t:'jelly'},{n:'קשתית',c:'#FFFFFF',s:'heart',acc:'rainbow',t:'nido'},
+  {n:'כוכבת רוק',c:'#FF7FAF',s:'cat',acc:'headphones',t:'crunchy'},{n:'נסיכת הבמה',c:'#FFE6A8',s:'unicorn',acc:'crown',t:'nido',leg:true},
 ];
+// The new kinds come early so she meets them soon: one after each of the next ten.
+const SQ_NEW=[
+  {n:'נידו ורוד',c:'#FF8FC0',s:'round',t:'nido'},{n:'סמאשר מים',c:'#7FD1FF',s:'round',t:'water'},{n:'חמאה',c:'#FFE07A',s:'mallow',t:'butter'},
+  {n:'קראנצ׳י',c:'#C9F27F',s:'round',t:'crunchy'},{n:'מוצ׳י תות',c:'#FFC8D8',s:'mallow',t:'mochi'},{n:'נידו גלקסי',c:'#6B4CE6',s:'round',t:'nido',acc:'galaxy'},
+  {n:'סמאשר חרוזים',c:'#FFB0D6',s:'round',t:'water',beads:true},{n:'קוביית נידו',c:'#9FE8C8',s:'mallow',t:'nido'},{n:'חמאת וניל',c:'#FFF1C4',s:'round',t:'butter'},
+  {n:'ג׳לי קשת',c:'#FFFFFF',s:'jelly',acc:'rainbow',t:'jelly'},
+];
+const SQ=SQ_BASE.slice(0,2);
+SQ_BASE.slice(2).forEach((q,i)=>{if(SQ_NEW[i])SQ.push(SQ_NEW[i]);SQ.push(q)});
 let sqUid=0;
 const STARS_PER_SQUISHY=5;
 function sqSVG(q){
@@ -386,6 +410,22 @@ function sqSVG(q){
   if(s==='panda') front+=ell(38,57,8,9,'#3B2F3F','transform="rotate(-15 38 57)"')+ell(62,57,8,9,'#3B2F3F','transform="rotate(15 62 57)"');
   if(s==='berry') front+=`<path d="M38 34l6-9 6 7 6-7 6 9-12 3z" fill="#4CC07A"/>`+[[32,48],[68,48],[40,80],[60,80],[50,86],[28,62],[72,62]].map(([x,y])=>ell(x,y,1.6,2.4,'#FFE38A')).join('');
   if(s==='glitter'||s==='unicorn') front+=[[18,30,5],[84,40,4],[80,80,3.5],[14,76,3]].map(([x,y,r])=>`<path d="M${x} ${y-r*2}Q${x} ${y} ${x+r*2} ${y}Q${x} ${y} ${x} ${y+r*2}Q${x} ${y} ${x-r*2} ${y}Q${x} ${y} ${x} ${y-r*2}Z" fill="#F2AE1C"/>`).join('');
+  const T=q.t||'foam', P=[[36,46],[60,42],[46,74],[66,68],[30,66],[56,82],[72,52],[40,84],[50,40],[26,52]];
+  if(T==='water'){ // see-through, with bubbles (or beads) floating inside
+    body=`<g opacity=".6">${body}</g>`;
+    front+=P.map(([x,y],k)=>q.beads?`<circle cx="${x}" cy="${y}" r="${3+k%3}" fill="${['#FF5C9A','#FFD36B','#8A6CFF','#4CC9A0'][k%4]}" opacity=".85"/>`
+      :`<circle cx="${x}" cy="${y}" r="${1.6+k%3}" fill="none" stroke="#fff" stroke-width="1.4" opacity=".85"/>`).join('');
+  }
+  if(T==='nido'){ // glossy goo
+    const id='gl'+(++sqUid);
+    defs+=`<defs><radialGradient id="${id}" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+    front+=`<ellipse cx="48" cy="56" rx="28" ry="24" fill="url(#${id})"/>`;
+  }
+  if(T==='butter') front+=`<path d="M24 42Q32 34 50 34Q68 34 76 42Q73 50 69 45Q66 54 62 46Q57 53 53 45Q47 54 43 46Q38 53 34 45Q29 51 24 42Z" fill="#FFFBEA" opacity=".9"/>`;
+  if(T==='crunchy') front+=P.concat([[44,52],[58,72],[34,78]]).map(([x,y],k)=>`<rect x="${x-1.6}" y="${y-1.6}" width="3.2" height="3.2" rx="1" transform="rotate(${k*37} ${x} ${y})" fill="${['#fff','#FFD36B','#FF8FB8','#8FD3FF'][k%4]}" opacity=".9"/>`).join('');
+  if(T==='jelly') {body=`<g opacity=".86">${body}</g>`;front+=P.slice(0,6).map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff"/>`).join('')}
+  if(T==='mochi') front+=P.map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".9" fill="#fff" opacity=".9"/>`).join('');
+  if(A==='galaxy') front+=P.concat([[20,60],[80,62],[50,88]]).map(([x,y],k)=>`<circle cx="${x}" cy="${y}" r="${k%3?0.9:1.7}" fill="#fff"/>`).join('');
   const hl=s==='avo'?'':ell(34,44,9,5,'#fff','opacity=".55" transform="rotate(-25 34 44)"');
   const y=58+fy;
   const face=`<ellipse cx="38" cy="${y}" rx="4.6" ry="5.6" fill="${s==='panda'?'#fff':dark}"/><ellipse cx="62" cy="${y}" rx="4.6" ry="5.6" fill="${s==='panda'?'#fff':dark}"/>`
@@ -412,7 +452,7 @@ function squishFx(el,i){
   const g=GLYPH[p];
   for(let k=0;k<6;k++)el.insertAdjacentHTML('beforeend',`<span class="fxp" style="--dx:${rnd(90)-45}px;color:${GCOL[p]};animation-delay:${k*70}ms">${g[rnd(g.length)]}</span>`);
   setTimeout(()=>el.querySelectorAll('.fxp').forEach(x=>x.remove()),1500);
-  sfx.squeak(i);if(p==='notes')[0,2,4].forEach((n,j)=>setTimeout(()=>sfx.good(n),120*j));buzz(20);
+  const snd=SND[SQ[i]?.t||'foam'];snd.press();setTimeout(()=>snd.release(),280);hap('soft');
 }
 
 /* ---------- levels & looks ---------- */
@@ -612,6 +652,7 @@ let cur='home', R=null, trickId=null, mapSel=null;
 const SCREENS=['home','pick','play','result','tricks','trick','map','squish'];
 const PARENT={pick:'home',play:'pick',result:'home',tricks:'home',trick:'tricks',map:'home',squish:'home'};
 function go(name){
+  closeSqPlay();
   cur=name;if(name==='home')homeEv=null;
   SCREENS.forEach(s=>{$('#s-'+s).hidden=s!==name});
   $('#back').hidden=name==='home'||name==='result';
@@ -1059,15 +1100,107 @@ function renderMap(){
   });
 }
 
+/* ---------- ASMR squishies ---------- */
+// How each kind feels: squash speed while held, max squash, time to come back, wobble, and how far it stretches.
+const TYPES={
+  foam:{n:'סלואו רייז',hint:'לחצי חזק ותני לו לתפוח בחזרה לאט',speed:1.4,depth:.56,back:1900,wob:0,str:.25,move:0},
+  nido:{n:'נידו',hint:'לחצי, ומשכי לצדדים כדי למתוח',speed:3,depth:.6,back:650,wob:.6,str:.85,move:70},
+  butter:{n:'חמאה',hint:'לחצי לאט ומרחי לאט לאט',speed:.9,depth:.7,back:1400,wob:.12,str:.55,move:90},
+  water:{n:'סמאשר מים',hint:'מעכי ותקשיבי למים',speed:4,depth:.5,back:550,wob:.9,str:.35,move:60},
+  crunchy:{n:'קראנצ׳י',hint:'החזיקי ומעכי לקראנץ׳ ארוך',speed:2.4,depth:.42,back:420,wob:.3,str:.15,move:0},
+  jelly:{n:'ג׳לי',hint:'לחיצה קצרה, והוא רועד',speed:3.6,depth:.5,back:750,wob:1,str:.4,move:0},
+  mochi:{n:'מוצ׳י',hint:'קליק קטן, והוא קופץ בחזרה',speed:6,depth:.35,back:240,wob:.45,str:.12,move:0},
+};
+// Sounds are made on the fly from filtered noise and pitch sweeps — no audio files.
+let NB=null;
+function noise(dur,o={}){
+  const a=ac();if(!a)return;
+  if(!NB){NB=a.createBuffer(1,a.sampleRate*2,a.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  const src=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(o.at||0);
+  src.buffer=NB;f.type=o.type||'bandpass';f.Q.value=o.q||1;
+  f.frequency.setValueAtTime(o.f0||800,t);f.frequency.exponentialRampToValueAtTime(o.f1||o.f0||800,t+dur);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(o.vol||.3,t+(o.atk||.01));g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  src.connect(f).connect(g).connect(a.destination);src.start(t,Math.random());src.stop(t+dur+.05);
+}
+function sweep(f0,f1,dur,at=0,vol=.15,type='sine'){
+  const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+at;
+  o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.05);
+}
+const bloops=(n,spread)=>{for(let k=0;k<n;k++)sweep(480+Math.random()*520,170+Math.random()*120,.1,Math.random()*spread,.09)};
+const crunch=(n,spread,vol=.28)=>{for(let k=0;k<n;k++)noise(.015,{type:'highpass',f0:2400+Math.random()*3200,q:.7,vol:vol*(.4+Math.random()*.6),at:Math.random()*spread,atk:.002})};
+const SND={
+  foam:{press(){noise(.45,{type:'lowpass',f0:1400,f1:220,vol:.42,atk:.02});sweep(110,60,.2,0,.12)},release(){noise(1.8,{type:'lowpass',f0:250,f1:2200,vol:.08,atk:.4})},move(){}},
+  nido:{press(){noise(.3,{f0:700,f1:160,q:5,vol:.5});noise(.25,{f0:420,f1:900,q:6,vol:.28,at:.08});sweep(260,110,.18,.02,.1)},release(){noise(.22,{f0:250,f1:700,q:6,vol:.32});sweep(140,320,.12,.05,.08)},move(){noise(.18,{f0:300+Math.random()*300,f1:700,q:7,vol:.3})}},
+  butter:{press(){noise(.75,{type:'lowpass',f0:620,f1:170,vol:.38,atk:.12})},release(){noise(.9,{type:'lowpass',f0:200,f1:520,vol:.13,atk:.2})},move(){noise(.4,{type:'lowpass',f0:420,f1:240,vol:.2,atk:.08})}},
+  water:{press(){noise(.45,{f0:1600,f1:350,q:1.2,vol:.42});bloops(5,.35)},release(){noise(.7,{f0:500,f1:1000,q:3,vol:.2,atk:.05});bloops(6,.6)},move(){bloops(3,.25);noise(.3,{f0:700,f1:400,q:3,vol:.15})}},
+  crunchy:{press(){crunch(28,.45)},release(){crunch(10,.2,.16)},move(){}},
+  jelly:{press(){sweep(220,120,.12,0,.2)},release(){sweep(140,420,.18,0,.17);sweep(420,260,.2,.18,.1)},move(){}},
+  mochi:{press(){sweep(600,250,.06,0,.16)},release(){sweep(300,900,.05,0,.2);noise(.02,{type:'highpass',f0:3000,vol:.22})},move(){}},
+};
+// Inside the studio iPhone app the phone itself taps back (native haptics); elsewhere a short vibration where supported.
+function hap(kind){try{if(window.webkit?.messageHandlers?.haptic){window.webkit.messageHandlers.haptic.postMessage(kind);return}}catch(e){}buzz(kind==='rigid'?8:15)}
+
+let SP=null;
+function openSqPlay(i){
+  closeSqPlay();
+  const q=SQ[i],T=TYPES[q.t||'foam'],el=$('#sqplay');
+  el.hidden=false;
+  el.innerHTML=`<div class="sqp-top"><button class="iconbtn" id="sqpClose" aria-label="סגירה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span class="chip">${T.n}</span></div>
+    <div class="sqp-stage" id="sqpStage"><div class="sqp-body" id="sqpBody">${sqSVG(q)}</div></div>
+    <div class="sqp-info"><b>${q.n}</b><span class="muted">${T.hint}</span></div>
+    <div class="sqp-nav"><button class="btn ghost" id="sqpPrev">הקודם</button><button class="btn ghost" id="sqpNext">הבא</button></div>`;
+  SP={i,T,snd:SND[q.t||'foam'],kind:q.t||'foam',held:false,p:0,dx:0,dy:0,rel:null,last:performance.now(),x0:0,y0:0,lx:0,ly:0,trav:0,tick:0,body:$('#sqpBody')};
+  const st=$('#sqpStage'),me=SP;
+  st.onpointerdown=e=>{e.preventDefault();st.setPointerCapture(e.pointerId);me.held=true;me.rel=null;me.x0=me.lx=e.clientX;me.y0=me.ly=e.clientY;me.trav=0;
+    me.snd.press();hap(me.kind==='water'?'medium':me.kind==='mochi'?'rigid':'soft');
+    if(me.kind==='crunchy')me.tick=setInterval(()=>{if(me.held){crunch(9,.22,.22);hap('rigid')}},230)};
+  st.onpointermove=e=>{if(!me.held)return;me.dx=e.clientX-me.x0;me.dy=e.clientY-me.y0;
+    me.trav+=Math.hypot(e.clientX-me.lx,e.clientY-me.ly);me.lx=e.clientX;me.ly=e.clientY;
+    if(me.T.move&&me.trav>me.T.move){me.trav=0;me.snd.move();hap('light')}};
+  const up=()=>{if(!me.held)return;me.held=false;clearInterval(me.tick);me.rel={t0:performance.now(),p0:me.p,dx0:me.dx,dy0:me.dy};me.dx=me.dy=0;
+    me.snd.release();hap('light');if(me.T.wob>.5)[120,240].forEach(ms=>setTimeout(()=>hap('light'),ms));sqParticles(me.kind)};
+  st.onpointerup=up;st.onpointercancel=up;
+  $('#sqpClose').onclick=closeSqPlay;
+  const owned=S.owned;$('#sqpPrev').onclick=()=>openSqPlay((i-1+owned)%owned);$('#sqpNext').onclick=()=>openSqPlay((i+1)%owned);
+  SP.raf=requestAnimationFrame(sqLoop);
+}
+function closeSqPlay(){if(!SP)return;cancelAnimationFrame(SP.raf);clearInterval(SP.tick);SP=null;$('#sqplay').hidden=true}
+function sqLoop(now){
+  const me=SP;if(!me)return;
+  const dt=Math.min(.05,(now-me.last)/1000);me.last=now;
+  const T=me.T;let p=me.p,w=0,dx=me.dx,dy=me.dy;
+  if(me.held)p+=(T.depth-p)*Math.min(1,dt*T.speed);
+  else if(me.rel){
+    const t=Math.min(1,(now-me.rel.t0)/T.back),e=1-Math.pow(1-t,3),ts=(now-me.rel.t0)/1000;
+    p=me.rel.p0*(1-e);dx=me.rel.dx0*(1-e);dy=me.rel.dy0*(1-e);
+    w=T.wob*Math.max(me.rel.p0,.3)*Math.exp(-ts*4)*Math.sin(ts*20);
+    if(t>=1&&Math.abs(w)<.003){me.rel=null;w=0}
+  }
+  me.p=p;
+  const k=T.str,sx=Math.max(-.3,Math.min(.7,Math.abs(dx)/220*k)),sy=Math.max(-.3,Math.min(.7,-dy/220*k));
+  const X=1+p*.5+sx-Math.max(0,sy)*.3+w*.15,Y=1-p*.55+sy-sx*.3-w*.15;
+  me.body.style.transform=`translate(${dx*k*.25}px,${Math.min(0,dy)*k*.2}px) scale(${X.toFixed(3)},${Math.max(.3,Y).toFixed(3)})`;
+  me.raf=requestAnimationFrame(sqLoop);
+}
+function sqParticles(kind){
+  const g={water:['•','○','°'],crunchy:['▪','•','▴'],jelly:['✦','✧'],nido:['○'],butter:[],foam:[],mochi:['·','•']}[kind]||[];
+  const col={water:'#5AAEFF',crunchy:'#F2AE1C',jelly:'#FF8FB8',nido:'#fff',mochi:'#FFB3C8'}[kind];
+  const st=$('#sqpStage');if(!st)return;
+  for(let k=0;k<(kind==='water'?10:6)&&g.length;k++)st.insertAdjacentHTML('beforeend',`<span class="fxp" style="--dx:${rnd(160)-80}px;top:55%;color:${col};font-size:${14+rnd(14)}px;animation-delay:${k*35}ms">${g[rnd(g.length)]}</span>`);
+  setTimeout(()=>st.querySelectorAll('.fxp').forEach(x=>x.remove()),1400);
+}
+
 /* ---------- squishies ---------- */
 function renderSquish(){
   $('#s-squish').innerHTML=`
     <h2 class="display">האוסף שלי</h2>
-    <p class="muted">כל ${STARS_PER_SQUISHY} כוכבים מביאים סקווישי חדש, ולכל אחד יש קסם משלו. הקישי עליהם!</p>
-    <div class="sqgrid">${SQ.map((q,i)=>{const tier=i===SQ.length-1?'אגדי':i>=22?'נדיר':'';
-      return i<S.owned?`<button class="sq ${tier?'tier':''}" data-i="${i}">${tier?`<span class="rare">${tier}</span>`:''}${sqSVG(q)}<b>${q.n}</b></button>`
+    <p class="muted">כל ${STARS_PER_SQUISHY} כוכבים מביאים סקווישי חדש. הקישי על סקווישי, לחצי עליו, מתחי אותו ותקשיבי.</p>
+    <div class="sqgrid">${SQ.map((q,i)=>{const tier=q.leg?'אגדי':i>=26?'נדיר':'';
+      return i<S.owned?`<button class="sq ${tier?'tier':''}" data-i="${i}">${tier?`<span class="rare">${tier}</span>`:''}${sqSVG(q)}<b>${q.n}</b><small class="type">${TYPES[q.t||'foam'].n}</small></button>`
         :`<div class="sq locked">${sqSVG(q)}<b>?</b><small>ב-${i*STARS_PER_SQUISHY} ★</small></div>`}).join('')}</div>`;
-  document.querySelectorAll('button.sq').forEach(b=>b.onclick=()=>squishFx(b,+b.dataset.i));
+  document.querySelectorAll('button.sq').forEach(b=>b.onclick=()=>openSqPlay(+b.dataset.i));
 }
 
 /* ---------- boot ---------- */
