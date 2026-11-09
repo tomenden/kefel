@@ -28,6 +28,7 @@
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{
   background:
     radial-gradient(90% 45% at 15% -5%, color-mix(in srgb,var(--accent) 22%,transparent), transparent 70%),
@@ -50,6 +51,7 @@ b{font-weight:700}
 .top .grow{flex:1;min-width:0}
 .iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line)}
 .iconbtn svg{width:20px;height:20px}
+a.iconbtn{color:var(--ink)}
 main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:18px}
 .screen{display:flex;flex-direction:column;gap:14px;animation:in .35s ease}
 @keyframes in{from{transform:translateY(8px)}to{transform:none}}
@@ -284,6 +286,7 @@ p{margin:0}
 
 <div id="app" dir="rtl" lang="he">
   <header class="top">
+    <a class="iconbtn" id="studioBtn" href="/studio/" aria-label="חזרה לסטודיו" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg></a>
     <button class="iconbtn" id="back" aria-label="חזרה" hidden></button>
     <span class="chip" id="chipStars"></span>
     <span class="grow"></span>
@@ -318,6 +321,7 @@ const dayStr=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
 const today=()=>dayStr(new Date());
 const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return dayStr(d)};
 const DAILY_GOAL=20;
+const IN_STUDIO=/YaelStudio/.test(navigator.userAgent)||document.referrer.includes('/studio/');
 
 /* ---------- icons ---------- */
 const ICON={
@@ -563,6 +567,7 @@ function go(name){
   cur=name;if(name==='home')homeEv=null;
   SCREENS.forEach(s=>{$('#s-'+s).hidden=s!==name});
   $('#back').hidden=name==='home'||name==='result';
+  $('#studioBtn').hidden=!(IN_STUDIO&&name==='home');
   ({home:renderHome,pick:renderPick,play:()=>{},result:()=>{},tricks:renderTricks,trick:renderTrick,map:renderMap,squish:renderSquish})[name]();
   renderTop(); $('#main').scrollTop=0;
 }
