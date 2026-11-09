@@ -476,7 +476,7 @@ function mergeState(a,b){
   if((b.lastDay||'')>(a.lastDay||'')){m.lastDay=b.lastDay;m.streak=b.streak}
   else if(b.lastDay===a.lastDay)m.streak=Math.max(a.streak||0,b.streak||0);
   m.giftDay=(b.giftDay||'')>(a.giftDay||'')?b.giftDay:a.giftDay;
-  if((b.updated||0)>(a.updated||0)){m.look=b.look;m.sound=b.sound}
+  if((b.updated||0)>(a.updated||0)){m.look=b.look??a.look;m.sound=b.sound??a.sound}
   m.updated=Math.max(a.updated||0,b.updated||0);
   return m;
 }
