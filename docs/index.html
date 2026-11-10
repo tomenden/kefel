@@ -153,6 +153,27 @@ p{margin:0}
 .praise{position:absolute;top:10px;font-family:var(--font-display);font-weight:700;font-size:36px;color:var(--accent);animation:pop .5s ease both}
 @keyframes pop{from{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}to{transform:scale(1);opacity:1}}
 .hintline{font-size:15px;color:var(--muted);text-align:center;max-width:32ch}
+.expr{direction:ltr;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:.16em;font-weight:700;font-size:clamp(32px,9.5vw,50px);line-height:1.15;max-width:100%}
+.expr .op{color:var(--accent);font:inherit;min-width:1.15em;text-align:center}
+.expr button.op{padding:0 .12em;border-radius:14px;background:color-mix(in srgb,var(--accent) 12%,transparent);border:2px dashed color-mix(in srgb,var(--accent) 50%,transparent)}
+.expr button.op.hint{border:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 25%,transparent)}
+.expr button.op.bad{animation:shake .4s}
+.expr .par{color:var(--muted);font-weight:500}
+.expr .sel{display:inline-flex;gap:.16em;align-items:center;background:color-mix(in srgb,var(--gold) 28%,transparent);border-radius:14px;padding:0 .15em}
+.chain{direction:ltr;display:flex;flex-wrap:wrap;justify-content:center;gap:.3em;font-weight:700;font-size:20px}
+.chain span{white-space:nowrap}
+.chain b{color:var(--accent)}
+.chain.big{font-size:22px;margin-top:6px}
+.expr .chain{font-size:clamp(20px,6vw,28px)}
+.rules{display:flex;flex-direction:column;gap:10px}
+.rules summary{cursor:pointer;font-size:18px}
+.rules[open] summary{margin-bottom:6px}
+.rule{display:flex;gap:12px;align-items:center;margin-block:6px}
+.rule .n{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font-weight:700}
+.rule div{display:flex;flex-direction:column}
+.rule small{color:var(--muted)}
+.ex{background:var(--surface-2);border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.tag-now{font-size:12px;color:#fff;background:var(--accent);border-radius:99px;padding:1px 8px;margin-inline-start:6px;vertical-align:2px}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:ltr}
 .key{height:clamp(50px,8.4vh,66px);border-radius:18px;background:var(--surface);border:1px solid var(--line);font-size:28px;font-weight:600;
   box-shadow:0 3px 0 var(--line);transition:transform .06s}
@@ -317,6 +338,7 @@ p{margin:0}
     <section class="screen lesson" id="s-trick" hidden></section>
     <section class="screen" id="s-map" hidden></section>
     <section class="screen" id="s-squish" hidden></section>
+    <section class="screen" id="s-ops" hidden></section>
   </main>
 </div>
 <div class="sqplay" id="sqplay" hidden></div>
@@ -464,11 +486,20 @@ function levelOf(st){let i=0;LEVELS.forEach((l,j)=>{if(st>=l[0])i=j});return i}
 
 /* ---------- state ---------- */
 const LS='yael-kefel-v1';
-const freshState=()=>({v:1,stars:0,rounds:0,answers:0,facts:{},days:{},streak:0,lastDay:'',owned:1,tricks:{},look:0,sound:true,updated:0,best60:0,giftDay:''});
+const freshState=()=>({v:1,stars:0,rounds:0,answers:0,facts:{},days:{},streak:0,lastDay:'',owned:1,tricks:{},look:0,sound:true,updated:0,best60:0,giftDay:'',ops:{},log:{},opsLesson:false});
 let S=freshState();
 try{const r=JSON.parse(localStorage.getItem(LS));if(r&&r.v===1)S=Object.assign(freshState(),r)}catch(e){}
 const F=k=>S.facts[k]||(S.facts[k]={box:0,seen:0,ok:0,miss:0});
 const box=k=>S.facts[k]?.box||0;
+// Time log for the parents' page: answers per kind and seconds of practice per day.
+// A gap over 2 minutes means she stepped away, so it counts as a fresh 5 seconds instead of the whole gap.
+let lastAnsAt=0;
+function logAns(kind){
+  const d=today(),L=S.log||(S.log={}),e=L[d]||(L[d]={}),now=Date.now(),gap=now-lastAnsAt;
+  e[kind]=(e[kind]||0)+1;
+  e.sec=Math.round((e.sec||0)+(lastAnsAt&&gap<120000?Math.min(30,gap/1000):5));
+  lastAnsAt=now;
+}
 function save(){S.updated=Date.now();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 
 /* ---------- progress sync ---------- */
@@ -507,11 +538,16 @@ const sync=KidSync('kefel');
 function mergeState(a,b){
   if(!b||b.v!==1)return a;
   const m=Object.assign(freshState(),a);
-  m.facts={};
-  for(const k of new Set([...Object.keys(a.facts||{}),...Object.keys(b.facts||{})])){
-    const x=a.facts?.[k],y=b.facts?.[k];
-    m.facts[k]=!x?y:!y?x:(y.seen>x.seen||(y.seen===x.seen&&y.box>x.box))?y:x;
+  for(const coll of ['facts','ops']){
+    m[coll]={};
+    for(const k of new Set([...Object.keys(a[coll]||{}),...Object.keys(b[coll]||{})])){
+      const x=a[coll]?.[k],y=b[coll]?.[k];
+      m[coll][k]=!x?y:!y?x:(y.seen>x.seen||(y.seen===x.seen&&y.box>x.box))?y:x;
+    }
   }
+  m.log=Object.assign({},a.log);
+  for(const[d,e]of Object.entries(b.log||{})){const x=m.log[d]||{};m.log[d]=Object.fromEntries([...new Set([...Object.keys(x),...Object.keys(e)])].map(f=>[f,Math.max(x[f]||0,e[f]||0)]))}
+  m.opsLesson=!!(a.opsLesson||b.opsLesson);
   for(const f of ['stars','rounds','answers','best60','owned'])m[f]=Math.max(a[f]||0,b[f]||0);
   m.days=Object.assign({},a.days);for(const[d,n]of Object.entries(b.days||{}))m.days[d]=Math.max(m.days[d]||0,n);
   m.tricks=Object.assign({},a.tricks,b.tricks);
@@ -651,19 +687,19 @@ TRICKS.sort((x,y)=>TRICK_ORDER.indexOf(x.id)-TRICK_ORDER.indexOf(y.id));
 
 /* ---------- navigation ---------- */
 let cur='home', R=null, trickId=null, mapSel=null;
-const SCREENS=['home','pick','play','result','tricks','trick','map','squish'];
-const PARENT={pick:'home',play:'pick',result:'home',tricks:'home',trick:'tricks',map:'home',squish:'home'};
+const SCREENS=['home','pick','play','result','tricks','trick','map','squish','ops'];
+const PARENT={ops:'pick',pick:'home',play:'pick',result:'home',tricks:'home',trick:'tricks',map:'home',squish:'home'};
 function go(name){
   closeSqPlay();
   cur=name;if(name==='home')homeEv=null;
   SCREENS.forEach(s=>{$('#s-'+s).hidden=s!==name});
   $('#back').hidden=name==='home'||name==='result';
   $('#studioBtn').hidden=!(IN_STUDIO&&name==='home');
-  ({home:renderHome,pick:renderPick,play:()=>{},result:()=>{},tricks:renderTricks,trick:renderTrick,map:renderMap,squish:renderSquish})[name]();
+  ({home:renderHome,pick:renderPick,play:()=>{},result:()=>{},tricks:renderTricks,trick:renderTrick,map:renderMap,squish:renderSquish,ops:renderOps})[name]();
   renderTop(); $('#main').scrollTop=0;
 }
 $('#back').innerHTML=ICON.back;
-$('#back').onclick=()=>{if(cur==='play'){R=null;go('pick')}else go(PARENT[cur]||'home')};
+$('#back').onclick=()=>{if(cur==='play'){const o=R?.kind==='ops';R=null;go(o?'ops':'pick')}else go(PARENT[cur]||'home')};
 $('#sound').onclick=()=>{S.sound=!S.sound;save();renderTop();toast(S.sound?'הצלילים פועלים':'הצלילים כבויים');if(S.sound){sfx.good(0);setTimeout(()=>sfx.good(2),130);setTimeout(()=>sfx.good(4),260)}};
 function toast(t){document.querySelector('.toast')?.remove();document.body.insertAdjacentHTML('beforeend',`<div class="toast" role="status">${t}</div>`);setTimeout(()=>document.querySelector('.toast')?.remove(),1600)}
 function renderTop(){
@@ -744,7 +780,7 @@ function openGift(){
 function answerRiddle(b){
   const ev=homeEv;if(ev.done)return;ev.done=true;
   const p=ev.a*ev.b,ok=+b.dataset.v===p,f=F(key(ev.a,ev.b));
-  f.seen++;f.last=Date.now();S.answers++;S.days[today()]=(S.days[today()]||0)+1;
+  f.seen++;f.last=Date.now();S.answers++;S.days[today()]=(S.days[today()]||0)+1;logAns('mult');
   document.querySelectorAll('.opts button').forEach(x=>x.classList.add(+x.dataset.v===p?'right':'wrong'));
   // Picking from options is easier than recalling, so it can lift a fact only up to "almost" (box 3).
   if(ok){f.ok++;if(f.box<3)f.box++;sfx.good(4);confetti(30);squishFx($('#actor'),Math.min(ev.sq,S.owned-1));$('#rres').innerHTML='<b>בול!</b>'}
@@ -759,7 +795,8 @@ function renderHome(){
   const nextTrick=TRICKS.find(t=>!S.tricks[t.id]);
   const weak=weakFacts();
   let sug;
-  if(weak.length>=4&&(!nextTrick||S.rounds%2===1))sug={tag:'הצעה להיום',t:'האתגר שלי',d:`${weak.length} תרגילים שעוד מתאמנים עליהם`,act:()=>startRound({mode:'weak'})};
+  if(!S.opsLesson&&S.rounds>=1)sug={tag:'חדש על הבמה',t:'סדר פעולות חשבון',d:'מה עושים קודם, כפל או חיבור?',act:()=>go('ops')};
+  else if(weak.length>=4&&(!nextTrick||S.rounds%2===1))sug={tag:'הצעה להיום',t:'האתגר שלי',d:`${weak.length} תרגילים שעוד מתאמנים עליהם`,act:()=>startRound({mode:'weak'})};
   else if(nextTrick)sug={tag:'טריק חדש מחכה',t:`${nextTrick.title}: ${nextTrick.sub}`,d:'שתי דקות של סוד, ואז תרגול',act:()=>{trickId=nextTrick.id;go('trick')}};
   else sug={tag:'הצעה להיום',t:'הכל מעורב',d:'שמירה על הכושר של כל הלוח',act:()=>startRound({mode:'mix'})};
   $('#s-home').innerHTML=`
@@ -782,7 +819,7 @@ function renderHome(){
       <button class="tile" data-go="tricks"><span class="ic">${ICON.bulb}</span><b>טריקים</b><small>${Object.keys(S.tricks).length} מתוך ${TRICKS.length} סודות</small></button>
       <button class="tile" data-go="map"><span class="ic">${ICON.grid}</span><b>המפה שלי</b><small>שולטת ב-${masteredCount()} מתוך ${FACTS.length}</small></button>
       <button class="tile" data-go="squish"><span class="ic sq">${sqSVG(SQ[Math.max(0,S.owned-1)])}</span><b>הסקווישים</b><small>${S.owned} מתוך ${SQ.length} באוסף</small></button>
-      <button class="tile" data-go="pick"><span class="ic">${ICON.target}</span><b>לוח לבחירה</b><small>מתאמנים על מספר אחד</small></button>
+      <button class="tile" data-go="ops"><span class="ic"><b class="ltr" style="font-size:17px">(+)×</b></span><b>סדר פעולות</b><small>${opsMasteredCount()} מתוך ${OPS_PATS.length} סוגי תרגילים</small></button>
     </div>
     <span class="sec-title">הלוק שלי</span>
     <div class="looks">${LOOKS.map((l,i)=>`<button class="look" data-look="${i}" aria-pressed="${S.look===i}" ${S.stars<l.at?'disabled':''}><i style="background:${l.a}"></i>${S.stars<l.at?`${l.at} ★`:l.n}</button>`).join('')}</div>`;
@@ -799,6 +836,8 @@ function renderPick(){
   const w=weakFacts().length;
   $('#s-pick').innerHTML=`
     <h2 class="display">איזה שיר שרים?</h2>
+    <button class="mode" id="mOps"><span class="ic"><b class="ltr" style="font-size:16px">(+)×</b></span><div><b>סדר פעולות חשבון</b><small>סוגריים, כפל וחילוק, חיבור וחיסור · ${Math.round(OPS_LEVELS.reduce((s,L)=>s+opsLevelPct(L),0)/OPS_LEVELS.length*100)}%</small></div></button>
+    <span class="sec-title">לוח הכפל</span>
     <div class="modes">
       <button class="mode" id="mWeak"><span class="ic">${ICON.target}</span><div><b>האתגר שלי</b><small>${w?`התרגילים שהכי צריכים חזרה (${w})`:'התרגילים שהכי צריכים חזרה'}</small></div></button>
       <button class="mode" id="mSprint"><span class="ic">${ICON.bolt}</span><div><b>ספרינט 60 שניות</b><small>${S.best60?`כמה תספיקי בדקה? השיא שלך: ${S.best60}`:'כמה תרגילים תספיקי בדקה אחת?'}</small></div></button>
@@ -809,6 +848,7 @@ function renderPick(){
   $('#mWeak').onclick=()=>startRound({mode:'weak'});
   $('#mMix').onclick=()=>startRound({mode:'mix'});
   $('#mSprint').onclick=startSprint;
+  $('#mOps').onclick=()=>go('ops');
   document.querySelectorAll('.tbl').forEach(b=>b.onclick=()=>startRound({mode:'table',n:+b.dataset.n}));
 }
 
@@ -832,6 +872,7 @@ function buildPairs(o){
 }
 function newR(o){return {o,queue:[],total:0,lights:[],firstOk:0,fastN:0,score:0,streak:0,best:0,fresh:[],missT:{},q:null,input:'',locked:false,hinted:false,t0:0,sprint:o.mode==='sprint'}}
 function startRound(o){
+  if(o.mode==='ops')return startOps(o);
   const pairs=buildPairs(o);
   R=newR(o);R.queue=pairs.map(([a,b],i)=>({a,b,i,tries:0}));R.total=pairs.length;R.lights=pairs.map(()=>'');
   go('play');renderPlayShell();nextQ();
@@ -864,6 +905,7 @@ function renderPlayShell(){
     </div>
     <div class="qcard" id="qcard">
       <div class="eq"><span id="qa"></span><span class="x">×</span><span id="qb"></span></div>
+      <div class="expr" id="qexpr" hidden></div>
       <div class="ans empty" id="ans">?</div>
       <div class="hintline" id="hintline"></div>
     </div>
@@ -875,6 +917,7 @@ function drawLights(){if(R.sprint)return;$('#lights').innerHTML=R.lights.map((s,
 function drawAns(){const el=$('#ans');el.textContent=R.input||'?';el.classList.toggle('empty',!R.input)}
 function nextQ(){
   if(!R)return;
+  if(R.kind==='ops')return opsNext();
   if(R.sprint){
     if(Date.now()>=R.end){clearInterval(R.timer);return finishRound()}
     let k;do{k=weightedPick(FACTS,1)[0]}while(R.q&&k===key(R.q.a,R.q.b));
@@ -891,6 +934,7 @@ function nextQ(){
   drawAns();drawLights();
 }
 function press(k){
+  if(R&&R.kind==='ops')return opsPress(k);
   if(!R||R.locked)return;
   if(k==='del'){R.input=R.input.slice(0,-1);drawAns();return}
   if(k==='hint'){R.hinted=true;$('#hintline').innerHTML=ICON.bulb.replace('<svg','<svg style="width:18px;height:18px;vertical-align:-3px;color:var(--gold)"')+' '+hintFor(R.q.a,R.q.b,false);sfx.tap();return}
@@ -907,7 +951,7 @@ function check(){
   const first=q.tries===0,clean=first&&!R.hinted,fast=dt<FAST_MS;
   if(first)f.seen++;
   f.last=Date.now();
-  S.answers++;S.days[today()]=(S.days[today()]||0)+1;
+  S.answers++;S.days[today()]=(S.days[today()]||0)+1;logAns('mult');
   const qc=$('#qcard');
   if(ok){
     f.ok++;
@@ -978,6 +1022,10 @@ function finishRound(){
     stars=1+(r.score>=12?1:0)+((rec&&prev>0)||r.score>=22?1:0);
     title=rec&&prev>0?'שיא חדש!':r.score>=12?'איזה ספרינט!':'כל הכבוד על הריצה!';
     stats=[[r.score,'נכונות בדקה אחת'],[S.best60,'השיא שלך'],[r.best,'הרצף הכי ארוך'],[r.total-r.score,'טעויות ללמוד מהן']];
+  }else if(r.kind==='ops'){
+    const acc=r.firstOk/r.total,L=OPS_LEVELS.find(l=>l.id===r.o.level)||OPS_LEVELS[0];stars=acc>=.9?3:acc>=.6?2:1;
+    title=stars===3?'סדר מושלם!':stars===2?'איזה ביצוע!':'כל הכבוד על האימון!';
+    stats=[[`${r.firstOk}/${r.total}`,'נפתרו בלי טעות'],[r.best,'הרצף הכי ארוך'],[`${Math.round(opsLevelPct(L)*100)}%`,`שליטה בשלב "${L.n}"`],[`${opsMasteredCount()}/${OPS_PATS.length}`,'סוגי תרגילים בשליטה']];
   }else{
     const acc=r.firstOk/r.total;stars=acc>=.9?3:acc>=.7?2:1;
     title=stars===3?'הופעה מושלמת!':stars===2?'איזה ביצוע!':'כל הכבוד על האימון!';
@@ -988,7 +1036,7 @@ function finishRound(){
   const g=grantStars(stars);
   if(r.o.trick)S.tricks[r.o.trick]=true;
   save();pushSync();
-  if(!r.sprint)stats[3][0]=`${masteredCount()}/${FACTS.length}`;
+  if(!r.sprint&&r.kind!=='ops')stats[3][0]=`${masteredCount()}/${FACTS.length}`;
   const top=Object.entries(r.missT).sort((x,y)=>y[1]-x[1])[0];
   const sugT=top&&top[1]>=2?TRICKS.find(x=>x.id===top[0]):null;
   go('result');
@@ -999,6 +1047,7 @@ function finishRound(){
     <div class="stats">${stats.map(([v,l])=>`<div class="stat"><b class="ltr">${v}</b><small>${l}</small></div>`).join('')}</div>
     ${r.fresh.length?`<div style="display:flex;flex-direction:column;gap:6px;align-items:center"><span class="muted">תרגילים שעכשיו את שולטת בהם:</span><div class="facts">${r.fresh.map(k=>{const[a,b]=k.split('x');return `<span class="ltr">${a} × ${b} = ${a*b}</span>`}).join('')}</div></div>`:''}
     ${sugT?`<div class="card" style="width:100%;text-align:right;display:flex;flex-direction:column;gap:10px"><span>הכי הרבה טעויות היו בתרגילים של <b>${sugT.title}</b>. הטריק "${sugT.sub}" יעזור!</span><button class="btn ghost" id="sugTrick">${ICON.bulb} לטריק</button></div>`:''}
+    ${r.kind==='ops'&&r.firstOk<r.total?`<div class="card" style="width:100%;text-align:right;display:flex;flex-direction:column;gap:10px"><span>כדאי לעבור שוב על החוקים של סדר הפעולות.</span><button class="btn ghost" id="opsRules">${ICON.bulb} לחוקים</button></div>`:''}
     ${g.newSq.map(q=>`<div class="card unlock">${sqSVG(q)}<div><span class="muted">סקווישי חדש הצטרף לאוסף!</span><h3 style="font-size:26px">${q.n}</h3></div></div>`).join('')}
     ${g.newLook?`<div class="card" style="width:100%">נפתח לוק חדש! אפשר לבחור אותו בעמוד הבית.</div>`:''}
     ${!g.newSq.length&&S.owned<SQ.length?`<p class="muted">עוד <span class="ltr">${S.owned*STARS_PER_SQUISHY-S.stars}</span> כוכבים לסקווישי הבא</p>`:''}
@@ -1008,8 +1057,194 @@ function finishRound(){
     </div>`;
   $('#again').onclick=()=>r.sprint?startSprint():startRound(r.o.trick?{mode:'mix'}:r.o);
   $('#home').onclick=()=>go('home');
+  if($('#opsRules'))$('#opsRules').onclick=()=>{opsShowRules=true;go('ops')};
   if(sugT)$('#sugTrick').onclick=()=>{trickId=sugT.id;go('trick')};
   sfx.fanfare();confetti(stars===3?140:80);
+}
+
+/* ---------- order of operations ---------- */
+// Levels follow the order kids meet the rules: × before +, then ÷, then same-rank left to right, then parentheses, then mixes.
+const OPS_LEVELS=[
+  {id:1,n:'כפל וחיבור',sub:'מה עושים קודם?',pats:['a+b×c','a×b+c','a−b×c','a×b−c']},
+  {id:2,n:'גם חילוק',sub:'חילוק הוא כמו כפל',pats:['a+b÷c','a÷b+c','a−b÷c','a÷b−c']},
+  {id:3,n:'משמאל לימין',sub:'פעולות באותה דרגה',pats:['a−b+c','a÷b×c','a−b−c','a×b÷c']},
+  {id:4,n:'סוגריים',sub:'מה שבסוגריים קודם',pats:['a×(b+c)','(a−b)×c','(a+b)÷c','a−(b+c)']},
+  {id:5,n:'אלופת הבמה',sub:'שלוש פעולות ביחד',pats:['a+b×c−d','(a+b)×c−d','a×b+c×d','a−b×c+d','(a−b)÷c+d']},
+];
+const OPS_PATS=OPS_LEVELS.flatMap(L=>L.pats);
+const OF=k=>(S.ops||(S.ops={}))[k]||(S.ops[k]={box:0,seen:0,ok:0,miss:0});
+const opsBox=pat=>S.ops?.['op:'+pat]?.box||0;
+const opsLevelPct=L=>L.pats.reduce((s,p)=>s+Math.min(4,opsBox(p)),0)/(4*L.pats.length);
+const opsMasteredCount=()=>OPS_PATS.filter(p=>opsBox(p)>=4).length;
+const isOp=x=>x==='+'||x==='−'||x==='×'||x==='÷';
+const inParens=(t,i)=>t.slice(0,i).filter(x=>x==='(').length>t.slice(0,i).filter(x=>x===')').length;
+// The operator to do first: innermost parentheses, then × ÷ left to right, then + − left to right.
+function nextOp(t){
+  let lo=0,hi=t.length-1;const close=t.indexOf(')');
+  if(close>=0){lo=t.lastIndexOf('(',close)+1;hi=close-1}
+  for(let i=lo;i<=hi;i++)if(t[i]==='×'||t[i]==='÷')return i;
+  for(let i=lo;i<=hi;i++)if(t[i]==='+'||t[i]==='−')return i;
+  return -1;
+}
+function applyOp(t,i){
+  const a=t[i-1],b=t[i+1],op=t[i],v=op==='×'?a*b:op==='÷'?a/b:op==='+'?a+b:a-b;
+  const n=[...t.slice(0,i-1),v,...t.slice(i+2)];
+  for(let k=1;k<n.length-1;k++)if(n[k-1]==='('&&n[k+1]===')'&&typeof n[k]==='number'){n.splice(k+1,1);n.splice(k-1,1);k=0}
+  return {v,next:n};
+}
+// Steps of the solution, or null when a step leaves whole numbers 0..100.
+function solveOps(t){
+  const steps=[];let c=t;
+  while(c.length>1){const i=nextOp(c);if(i<0)return null;const {v,next}=applyOp(c,i);if(!Number.isInteger(v)||v<0||v>100)return null;steps.push({toks:c,i,v});c=next}
+  return {steps,ans:c[0]};
+}
+function genExpr(pat){
+  for(let t=0;t<500;t++){
+    const tk=[...pat].map(ch=>/[a-d]/.test(ch)?{n:0}:ch);
+    tk.forEach((x,i)=>{if(x.n!==undefined){const near=['×','÷'].includes(tk[i-1])||['×','÷'].includes(tk[i+1]);x.n=near?2+rnd(9):1+rnd(40)}});
+    tk.forEach((x,i)=>{if(x==='÷'&&tk[i-1]?.n!==undefined&&tk[i+1]?.n!==undefined)tk[i-1].n=tk[i+1].n*(1+rnd(10))});
+    const toks=tk.map(x=>x.n!==undefined?x.n:x),sol=solveOps(toks);
+    if(sol&&sol.ans>=0)return {toks,...sol};
+  }
+  return null;
+}
+const tokStr=t=>t.join(' ').replace(/\( /g,'(').replace(/ \)/g,')');
+function exprHTML(t,{pick=false,sel=-1,hint=-1}={}){
+  let h='';
+  t.forEach((x,k)=>{
+    if(k===sel-1)h+='<span class="sel">';
+    if(typeof x==='number')h+=`<span class="num">${x}</span>`;
+    else if(x==='('||x===')')h+=`<span class="par">${x}</span>`;
+    else h+=pick?`<button class="op${k===hint?' hint':''}" data-op="${k}">${x}</button>`:`<span class="op">${x}</span>`;
+    if(k===sel+1)h+='</span>';
+  });
+  return h;
+}
+function opsRuleText(t){
+  const i=nextOp(t),op=t[i];
+  if(t.includes('(')&&inParens(t,i))return 'יש סוגריים? קודם פותרים את מה שבתוכם.';
+  if(op==='×'||op==='÷')return t.some(x=>x==='+'||x==='−')?'כפל וחילוק באים לפני חיבור וחיסור.':'כפל וחילוק באותה דרגה: הולכים לפי הסדר, משמאל לימין.';
+  return 'חיבור וחיסור באותה דרגה: הולכים לפי הסדר, משמאל לימין.';
+}
+function opsWrongPick(t,k){
+  const r=nextOp(t);
+  if(t.includes('(')&&inParens(t,r)&&!inParens(t,k))return 'קודם מה שבתוך הסוגריים!';
+  if((t[r]==='×'||t[r]==='÷')&&(t[k]==='+'||t[k]==='−'))return 'כפל וחילוק באים לפני חיבור וחיסור.';
+  return 'באותה דרגה הולכים לפי הסדר: הפעולה הראשונה משמאל.';
+}
+const chainHTML=q=>q.steps.map(st=>tokStr(st.toks)).concat(String(q.ans)).map(x=>`<span>${x}</span>`).join(' <b>→</b> ');
+
+function startOps(o){
+  const L=OPS_LEVELS.find(l=>l.id===o.level)||OPS_LEVELS[0];
+  // Each kind twice, the less-known kinds first in line.
+  const pats=[...L.pats,...L.pats].sort((x,y)=>opsBox(x)-opsBox(y)+Math.random()-.5).slice(0,8);
+  const qs=shuffle(pats.map(pat=>({pat,...genExpr(pat)})).filter(q=>q.toks)).map((q,i)=>({...q,i,tries:0}));
+  R=newR(o);R.kind='ops';R.queue=qs;R.total=qs.length;R.lights=qs.map(()=>'');
+  go('play');renderPlayShell();opsNext();
+}
+function opsNext(){
+  if(!R)return;if(!R.queue.length)return finishRound();
+  const q=R.q=R.queue.shift();
+  // Step-by-step until she knows the kind; straight to the answer once she does.
+  q.cur=q.toks.slice();q.mist=0;q.hintAt=-1;q.stepMode=q.tries>0||opsBox(q.pat)<2;q.phase=q.stepMode?'pick':'final';
+  R.input='';R.locked=false;R.hinted=false;R.t0=Date.now();
+  $('#qcard .eq').hidden=true;$('#qexpr').hidden=false;$('#fb').hidden=true;$('#pad').hidden=false;
+  const qc=$('#qcard');qc.classList.remove('good','shake');qc.querySelectorAll('.praise,.fast').forEach(x=>x.remove());
+  $('#ans').classList.remove('wrong');
+  opsDraw();drawLights();
+}
+function opsDraw(msg){
+  const q=R.q,calc=q.phase==='calc';
+  $('#qexpr').innerHTML=exprHTML(q.cur,{pick:q.phase==='pick',sel:calc?q.sel:-1,hint:q.hintAt});
+  $('#ans').hidden=q.phase==='pick';drawAns();
+  $('#hintline').innerHTML=msg||(q.phase==='pick'?'מה עושים קודם? הקישי על הפעולה':calc?`כמה זה ${eq(`${q.cur[q.sel-1]} ${q.cur[q.sel]} ${q.cur[q.sel+1]}`)}?`:'כמה יוצא בסוף?');
+  $('#qexpr').querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>opsPick(+b.dataset.op,b));
+}
+function opsPick(k,b){
+  const q=R.q;if(R.locked||q.phase!=='pick')return;
+  if(k===nextOp(q.cur)){q.sel=k;q.phase='calc';q.hintAt=-1;R.input='';sfx.tap();opsDraw();return}
+  q.mist++;sfx.bad();hap('light');b.classList.add('bad');$('#hintline').innerHTML=opsWrongPick(q.cur,k);setTimeout(()=>b.classList.remove('bad'),400);
+}
+function opsPress(k){
+  const q=R.q;if(!q||R.locked)return;
+  if(k==='hint'){
+    R.hinted=true;sfx.tap();
+    if(q.phase==='final'){q.stepMode=true;q.phase='pick';return opsDraw('בואי נפתור שלב אחרי שלב. '+opsRuleText(q.cur))}
+    if(q.phase==='pick'){q.hintAt=nextOp(q.cur);return opsDraw(opsRuleText(q.cur))}
+    const a=q.cur[q.sel-1],b=q.cur[q.sel+1],op=q.cur[q.sel];
+    $('#hintline').innerHTML=op==='×'?hintFor(a,b,false):op==='÷'?`כמה פעמים ${b} נכנס ב-${a}? חשבי על ${eq(`${b} × ? = ${a}`)}`:'חשבי לאט, אפשר גם על האצבעות';
+    return;
+  }
+  if(q.phase==='pick')return;
+  if(k==='del'){R.input=R.input.slice(0,-1);drawAns();return}
+  if(R.input.length>=3)return;
+  R.input+=k;drawAns();
+  const target=q.phase==='calc'?applyOp(q.cur,q.sel).v:q.ans;
+  if(R.input.length>=String(target).length)opsCheck(target);
+}
+function opsCheck(target){
+  const q=R.q,ok=+R.input===target;
+  if(q.phase==='final'){R.locked=true;return opsDone(ok)}
+  if(ok){sfx.good(Math.min(4,q.steps.length-q.cur.filter(isOp).length));return opsAdvance()}
+  q.mist++;R.locked=true;sfx.bad();
+  const a=$('#ans');a.textContent=target;a.classList.add('wrong');$('#qcard').classList.add('shake');
+  $('#hintline').innerHTML=eq(`${q.cur[q.sel-1]} ${q.cur[q.sel]} ${q.cur[q.sel+1]} = ${target}`);
+  setTimeout(()=>{if(!R||R.q!==q)return;$('#qcard').classList.remove('shake');a.classList.remove('wrong');R.locked=false;opsAdvance()},1600);
+}
+function opsAdvance(){
+  const q=R.q;q.cur=applyOp(q.cur,q.sel).next;R.input='';
+  if(q.cur.length===1){R.locked=true;return opsDone(true)}
+  q.phase='pick';opsDraw();
+}
+function opsDone(ok){
+  const q=R.q,f=OF('op:'+q.pat),first=q.tries===0,clean=ok&&q.mist===0&&!R.hinted,qc=$('#qcard');
+  if(first)f.seen++;f.last=Date.now();S.answers++;S.days[today()]=(S.days[today()]||0)+1;logAns('ops');
+  if(clean){
+    f.ok++;
+    // Solving step by step can lift a kind to "almost"; mastery needs the answer in one go.
+    if(first){f.box=Math.min(q.stepMode?2:5,f.box+1);R.firstOk++}
+    R.lights[q.i]=first?'ok':'fix';R.streak++;R.best=Math.max(R.best,R.streak);
+    sfx.good(R.streak-1);buzz(15);qc.classList.add('good');
+    qc.insertAdjacentHTML('afterbegin',`<span class="praise">${PRAISE[rnd(PRAISE.length)]}</span>`);
+    $('#meter').style.width=Math.min(100,R.streak*12)+'%';
+    if(R.streak===3)fanSay('#fanSol','יאללה יעל!');else if(R.streak===5)fanSay('#fanBerry','אגו! גו!');else if(R.streak%2===0)fanSay('#fanSol','');
+    $('#qexpr').innerHTML=`<span class="chain">${chainHTML(q)}</span>`;$('#ans').hidden=true;$('#hintline').innerHTML='';
+    save();drawLights();setTimeout(opsNext,q.stepMode?1400:900);
+    return;
+  }
+  if(first){f.miss++;f.box=Math.max(0,f.box-1)}
+  q.tries++;R.streak=0;$('#meter').style.width='0';if(!R.lights[q.i])R.lights[q.i]='miss';
+  if(q.tries<2)R.queue.splice(Math.min(2,R.queue.length),0,{...q}); // comes back, step by step
+  sfx.bad();save();drawLights();
+  $('#pad').hidden=true;$('#fb').hidden=false;
+  $('#fb').innerHTML=`<div class="card">
+      <div class="muted">${ok?'הגעת לתשובה, אבל עם טעות בדרך. ככה פותרים:':'כמעט! ככה פותרים:'}</div>
+      <div class="chain big">${chainHTML(q)}</div>
+      <div class="tip">${ICON.bulb}<span>${opsRuleText(q.toks)}</span></div>
+    </div>
+    <button class="btn" id="cont">הבנתי, ממשיכים</button>`;
+  $('#cont').onclick=()=>{sfx.tap();opsNext()};
+}
+let opsShowRules=false;
+function renderOps(){
+  const first=!S.opsLesson;if(first){S.opsLesson=true;save()}
+  const next=OPS_LEVELS.find(L=>opsLevelPct(L)<.75)||OPS_LEVELS[OPS_LEVELS.length-1];
+  $('#s-ops').innerHTML=`
+    <h2 class="display">סדר פעולות חשבון</h2>
+    <details class="card rules" ${first||opsShowRules?'open':''}><summary><b>החוקים</b> <span class="muted">(הקישי לפתיחה)</span></summary>
+      <div class="rule"><span class="n">1</span><div><b>סוגריים</b><small>מה שבתוך ${eq('( )')} פותרים לפני הכל</small></div></div>
+      <div class="rule"><span class="n">2</span><div><b>כפל וחילוק</b><small>לפני חיבור וחיסור</small></div></div>
+      <div class="rule"><span class="n">3</span><div><b>חיבור וחיסור</b><small>בסוף</small></div></div>
+      <p>ואם יש כמה פעולות באותה דרגה, למשל רק חיבור וחיסור? הולכים לפי הסדר, משמאל לימין.</p>
+      <div class="ex"><span class="muted">דוגמה:</span> <b>${eq('3 + 4 × 2')}</b>
+        <div><b style="color:var(--bad)">טעות:</b> ${eq('3 + 4 = 7')}, ואז ${eq('7 × 2 = 14')}</div>
+        <div><b style="color:var(--good)">נכון:</b> קודם כפל ${eq('4 × 2 = 8')}, ואז ${eq('3 + 8 = 11')}</div></div>
+    </details>
+    <span class="sec-title">שלבים</span>
+    <div class="tlist">${OPS_LEVELS.map(L=>{const p=opsLevelPct(L);return `<button class="trow" data-lvl="${L.id}"><span class="num">${L.id}</span><div style="flex:1"><b>${L.n}${L===next?' <span class="tag-now">הבא בתור</span>':''}</b><small>${L.sub} · ${eq(L.pats[0].replace(/[a-d]/g,'?'))}</small><span class="bar" style="display:block;height:6px;margin-top:6px"><i style="width:${p*100}%"></i></span></div>${p>=.75?`<span class="done">${ICON.check}</span>`:''}</button>`}).join('')}</div>
+    <p class="muted" style="font-size:14px">בהתחלה פותרים שלב אחרי שלב: מקישים על הפעולה שעושים קודם ומחשבים רק אותה. כשסוג תרגיל כבר יושב טוב, עוברים לתשובה ישירה.</p>`;
+  opsShowRules=false;
+  document.querySelectorAll('[data-lvl]').forEach(b=>b.onclick=()=>startRound({mode:'ops',level:+b.dataset.lvl}));
 }
 
 /* ---------- tricks ---------- */
@@ -1092,7 +1327,9 @@ function renderMap(){
     <div class="grid10">${g}</div>
     <div class="legend">${['','l1','l2','l3','l4'].map((c,i)=>`<span><i class="cell ${c}" style="aspect-ratio:auto"></i>${LVL_NAMES[i]}</span>`).join('')}</div>
     <div class="card info" id="info"><span class="muted">הקישי על משבצת כדי לראות פרטים וטריק.</span></div>
-    <p class="muted" style="font-size:14px">טיפ: ${eq('3 × 7')} ו-${eq('7 × 3')} נספרים יחד, ולכן יש 55 תרגילים ולא 100.</p>`;
+    <p class="muted" style="font-size:14px">טיפ: ${eq('3 × 7')} ו-${eq('7 × 3')} נספרים יחד, ולכן יש 55 תרגילים ולא 100.</p>
+    <span class="sec-title">סדר פעולות חשבון</span>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">${OPS_LEVELS.map(L=>{const p=opsLevelPct(L);return `<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><b>${L.id}. ${L.n}</b><span class="muted ltr">${Math.round(p*100)}%</span></div><div class="bar"><i style="width:${p*100}%"></i></div></div>`}).join('')}</div>`;
   document.querySelectorAll('.cell[data-a]').forEach(c=>c.onclick=()=>{
     document.querySelectorAll('.cell.sel').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');
     const a=+c.dataset.a,b=+c.dataset.b,f=S.facts[key(a,b)];
